@@ -49,7 +49,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 fun SplashScreen(onNavigateToLogin: () -> Unit) {
     // Agregamos LaunchedEffect para manejar el retraso
     LaunchedEffect(Unit) {
-        delay(10000) // Espera 10 segundos
+        delay(5000) // Espera 10 segundos
         onNavigateToLogin() // Llama a la función de navegación proporcionada
     }
 
@@ -157,7 +157,7 @@ fun RotatingCircle(
 @Composable
 fun AtomicLoader(
     modifier: Modifier,
-    color: Color = Color.Magenta,
+    color: Color = Color.Blue,
     borderWidth: Dp = 3.dp,
     cycleDuration: Int = 1000
 ) {
