@@ -26,21 +26,37 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.rememberNavController
 import com.example.pingbond.ui.theme.PINGBONDTheme
+import com.google.firebase.auth.FirebaseAuth
+
+val auth = FirebaseAuth.getInstance()
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             PINGBONDTheme {
-                LoginScreen()
+                // El parámetro `onLoginSuccess` ejecutará la lógica de navegación
+                LoginScreen(
+                    onLoginSuccess = {
+                        // Al hacer login exitoso, navega al Dashboard
+                        val navController = rememberNavController()
+
+                        // Navegar al Dashboard
+                        navController.navigate("dashboard") {
+                            // Elimina la pantalla de login del stack para que no puedan regresar
+                            popUpTo("login") { inclusive = true }
+                        }
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(onLoginSuccess: @Composable () -> Unit) {
     var selectedTab by remember { mutableStateOf(0) } // 0 -> Login, 1 -> Registro
 
     Box(
@@ -255,6 +271,15 @@ fun CustomTextField(
 @Composable
 fun PreviewLoginScreen() {
     PINGBONDTheme {
-        LoginScreen()
+        LoginScreen(onLoginSuccess = {
+            // Al hacer login exitoso, navega al Dashboard
+            val navController = rememberNavController()
+
+            // Navegar al Dashboard
+            navController.navigate("dashboard") {
+                // Elimina la pantalla de login del stack para que no puedan regresar
+                popUpTo("login") { inclusive = true }
+            }
+        })
     }
 }

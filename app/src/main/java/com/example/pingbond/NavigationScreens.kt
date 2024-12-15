@@ -38,7 +38,19 @@ fun Navigation() {
         }
 
         composable("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\LoginActivity.kt") {
-            LoginScreen()
+            LoginScreen(
+                onLoginSuccess  = {
+                    // Cuando el login es exitoso, navega al dashboard
+                    navController.navigate("dashboard") {
+                        // Elimina la pantalla de login del stack para evitar que el usuario pueda regresar al login
+                        popUpTo("login") { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\DashboardActivity.kt"){
+            DashboardScreen()
         }
     }
 }
