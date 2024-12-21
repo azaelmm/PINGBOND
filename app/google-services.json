@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "536724508812",
+    "project_id": "pingbond-db006",
+    "storage_bucket": "pingbond-db006.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:536724508812:android:068078d57739832a226ba9",
+        "android_client_info": {
+          "package_name": "com.example.pingbond"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDm61AdGyOUOqJXQXPuOirR4y_xqP-FmRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

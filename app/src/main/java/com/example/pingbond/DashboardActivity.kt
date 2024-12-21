@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -19,32 +20,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.filled.MailOutline
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Notifications
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.pingbond.ui.theme.PINGBONDTheme
+
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             PINGBONDTheme {
-                DashboardScreen()
+                DashboardScreen(onNavigate = { /* Handle navigation */ })
             }
         }
     }
 }
 
 @Composable
-fun DashboardScreen() {
-    // Fondo degradado
+fun DashboardScreen(onNavigate: (String) -> Unit) {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie))
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(Color(0xFF64B5F6), Color(0xFF1565C0))
+                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
                 )
             )
             .padding(16.dp)
@@ -53,13 +55,14 @@ fun DashboardScreen() {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Sección superior con el título
+
+            // Header
             HeaderSection()
 
-            // Opciones principales con íconos
-            MainOptionsSection()
+            // Main options
+            MainOptionsSection { route -> onNavigate(route) }
 
-            // Sección inferior con información adicional
+            // Footer
             FooterSection()
         }
     }
@@ -75,14 +78,14 @@ fun HeaderSection() {
             text = "Bienvenido, Usuario!",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = MaterialTheme.colorScheme.onPrimary
             ),
             modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
         )
         Text(
             text = "Conecta, chatea y comparte momentos",
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = Color.White.copy(alpha = 0.8f)
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
             ),
             textAlign = TextAlign.Center
         )
@@ -90,49 +93,34 @@ fun HeaderSection() {
 }
 
 @Composable
-fun MainOptionsSection() {
+fun MainOptionsSection(onOptionClick: (String) -> Unit) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            OptionCard(
-                title = "Mensajes",
-                icon = Icons.Default.MailOutline,
-                backgroundColor = Color(0xFF42A5F5),
-                onClick = { /* Navegar a Mensajes */ }
-            )
-            OptionCard(
-                title = "Contactos",
-                icon = Icons.Default.Person,
-                backgroundColor = Color(0xFF29B6F6),
-                onClick = { /* Navegar a Contactos */ }
-            )
-        }
+        val options = listOf(
+            DashboardOption("Mensajes", Icons.Default.MailOutline, Color(0xFF42A5F5), "messages"),
+            DashboardOption("Contactos", Icons.Default.Person, Color(0xFF29B6F6), "contacts"),
+            DashboardOption("Llamadas", Icons.Default.Call, Color(0xFF26C6DA), "calls"),
+            DashboardOption("Notificaciones", Icons.Default.Notifications, Color(0xFF00ACC1), "notifications")
+        )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            OptionCard(
-                title = "Llamadas",
-                icon = Icons.Default.Call,
-                backgroundColor = Color(0xFF26C6DA),
-                onClick = { /* Navegar a Llamadas */ }
-            )
-            OptionCard(
-                title = "Notificaciones",
-                icon = Icons.Default.Notifications,
-                backgroundColor = Color(0xFF00ACC1),
-                onClick = { /* Navegar a Notificaciones */ }
-            )
+        options.chunked(2).forEach { rowOptions ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                rowOptions.forEach { option ->
+                    OptionCard(
+                        title = option.title,
+                        icon = option.icon,
+                        backgroundColor = option.color,
+                        onClick = { onOptionClick(option.route) }
+                    )
+                }
+            }
         }
     }
 }
@@ -144,14 +132,14 @@ fun FooterSection() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Divider(
-            color = Color.White.copy(alpha = 0.5f),
+            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
             thickness = 1.dp,
             modifier = Modifier.padding(vertical = 16.dp)
         )
         Text(
             text = "PingBond © 2024",
             style = MaterialTheme.typography.bodySmall.copy(
-                color = Color.White.copy(alpha = 0.7f)
+                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
             )
         )
     }
@@ -186,7 +174,7 @@ fun OptionCard(
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.Bold
             ),
             modifier = Modifier.padding(top = 8.dp)
@@ -194,10 +182,17 @@ fun OptionCard(
     }
 }
 
+data class DashboardOption(
+    val title: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val color: Color,
+    val route: String
+)
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewDashboardScreen() {
     PINGBONDTheme {
-        DashboardScreen()
+        DashboardScreen(onNavigate = {})
     }
 }

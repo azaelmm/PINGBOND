@@ -50,7 +50,7 @@ fun Navigation() {
         }
 
         composable("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\DashboardActivity.kt"){
-            DashboardScreen()
+            //DashboardScreen()
         }
     }
 }
