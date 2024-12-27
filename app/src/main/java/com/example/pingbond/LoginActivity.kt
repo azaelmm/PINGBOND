@@ -1,6 +1,7 @@
 package com.example.pingbond
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -16,11 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
 import com.example.pingbond.ui.theme.PINGBONDTheme
+import com.google.android.gms.tasks.Task
+import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
 
 val auth = FirebaseAuth.getInstance()
@@ -39,6 +40,7 @@ class LoginActivity : ComponentActivity() {
             PINGBONDTheme {
                 // El parámetro `onLoginSuccess` ejecutará la lógica de navegación
                 LoginScreen(
+                    auth = auth,
                     onLoginSuccess = {
                         // Al hacer login exitoso, navega al Dashboard
                         val navController = rememberNavController()
@@ -56,7 +58,7 @@ class LoginActivity : ComponentActivity() {
 }
 
 @Composable
-fun LoginScreen(onLoginSuccess: @Composable () -> Unit) {
+fun LoginScreen(auth: FirebaseAuth, onLoginSuccess: @Composable () -> Unit) {
     var selectedTab by remember { mutableStateOf(0) } // 0 -> Login, 1 -> Registro
 
     Box(
@@ -183,7 +185,14 @@ fun LoginForm(onLogin: (String, String) -> Unit) {
                     errorMessage = "Por favor, completa todos los campos."
                 } else {
                     errorMessage = ""
-                    onLogin(email, password)
+                    auth.signInWithEmailAndPassword(email, password).addOnCompleteListener{task ->
+                        if(task.isSuccessful){
+                            Log.i("aris", "LOGIN OK")
+                        }else{
+                            //Error
+                            Log.i("aris", "LOGIN KO")
+                        }
+                    }
                 }
             },
             modifier = Modifier
@@ -271,7 +280,7 @@ fun CustomTextField(
 @Composable
 fun PreviewLoginScreen() {
     PINGBONDTheme {
-        LoginScreen(onLoginSuccess = {
+        LoginScreen(auth = auth, onLoginSuccess = {
             // Al hacer login exitoso, navega al Dashboard
             val navController = rememberNavController()
 

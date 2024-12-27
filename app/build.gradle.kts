@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.gms.google-services")
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -53,6 +53,7 @@ android {
 
 dependencies {
     implementation(libs.lottie.compose)
+    implementation (libs.firebase.ui.auth)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -75,3 +76,4 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
 }
+

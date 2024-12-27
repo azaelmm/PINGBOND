@@ -4,25 +4,44 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.pingbond.ui.theme.PINGBONDTheme
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.auth
 
 class NavigationScreens : ComponentActivity() {
+
+    private lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = Firebase.auth
         setContent {
             PINGBONDTheme {
-                Navigation()
+                val navController = rememberNavController()
+
+                Navigation(navController, auth)
             }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val currentUser: FirebaseUser? = auth.currentUser
+
+        if(currentUser!=null){
+            // navegar a la home
         }
     }
 }
 
 @Composable
-fun Navigation() {
-    val navController = rememberNavController()
+fun Navigation(navController: NavHostController, auth: FirebaseAuth) {
 
     NavHost(
         navController = navController,
@@ -38,10 +57,10 @@ fun Navigation() {
         }
 
         composable("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\LoginActivity.kt") {
-            LoginScreen(
+            LoginScreen(auth,
                 onLoginSuccess  = {
                     // Cuando el login es exitoso, navega al dashboard
-                    navController.navigate("dashboard") {
+                    navController.navigate("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\DashboardActivity.kt") {
                         // Elimina la pantalla de login del stack para evitar que el usuario pueda regresar al login
                         popUpTo("login") { inclusive = true }
                     }
