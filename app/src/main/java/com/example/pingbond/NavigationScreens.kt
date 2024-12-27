@@ -1,6 +1,7 @@
 package com.example.pingbond
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
@@ -35,6 +36,7 @@ class NavigationScreens : ComponentActivity() {
         val currentUser: FirebaseUser? = auth.currentUser
 
         if(currentUser!=null){
+            Log.i("Estado del log previo al inicio de sesion", "LOGIN OK")
             // navegar a la home
         }
     }

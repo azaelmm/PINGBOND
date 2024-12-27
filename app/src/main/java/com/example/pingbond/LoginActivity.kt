@@ -187,10 +187,11 @@ fun LoginForm(onLogin: (String, String) -> Unit) {
                     errorMessage = ""
                     auth.signInWithEmailAndPassword(email, password).addOnCompleteListener{task ->
                         if(task.isSuccessful){
-                            Log.i("aris", "LOGIN OK")
+                            Log.i("Estado del log", "LOGIN OK")
+
                         }else{
                             //Error
-                            Log.i("aris", "LOGIN KO")
+                            Log.i("Estado del log", "LOGIN KO")
                         }
                     }
                 }
@@ -218,6 +219,7 @@ fun RegisterForm(onRegister: (String, String) -> Unit) {
     // Similar a LoginForm pero con botones e inputs relevantes
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         CustomTextField(
@@ -238,7 +240,23 @@ fun RegisterForm(onRegister: (String, String) -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(
-            onClick = { onRegister(email, password) },
+            onClick = {
+                if (email.isBlank() || password.isBlank()) {
+                    errorMessage = "Por favor, completa todos los campos."
+                } else {
+                    errorMessage = ""
+                    auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener{task ->
+                        if(task.isSuccessful){
+                            Log.i("Estado del register", "REGISTER OK")
+
+                        }else{
+                            //Error
+                            Log.i("Estado del register", "REGISTER KO")
+                        }
+                    }
+                }
+
+            },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(50)
         ) {
