@@ -37,6 +37,9 @@ class NavigationScreens : ComponentActivity() {
 
         if(currentUser!=null){
             Log.i("Estado del log previo al inicio de sesion", "LOGIN OK")
+//            navController.navigate("dashboard") {
+//                popUpTo("splash") { inclusive = true }
+//            }
             // navegar a la home
         }
     }
@@ -44,34 +47,30 @@ class NavigationScreens : ComponentActivity() {
 
 @Composable
 fun Navigation(navController: NavHostController, auth: FirebaseAuth) {
-
     NavHost(
         navController = navController,
-        startDestination = "C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\InicioAPP.kt"
+        startDestination = "splash"
     ) {
-        composable("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\InicioAPP.kt") {
+        composable("splash") {
             SplashScreen {
-                // Al terminar el splash, navega al login
-                navController.navigate("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\LoginActivity.kt") {
-                    popUpTo("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\InicioAPP.kt") { inclusive = true }
+                navController.navigate("login") {
+                    popUpTo("splash") { inclusive = true }
                 }
             }
         }
 
-        composable("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\LoginActivity.kt") {
-            LoginScreen(auth,
-                onLoginSuccess  = {
-                    // Cuando el login es exitoso, navega al dashboard
-                    navController.navigate("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\DashboardActivity.kt") {
-                        // Elimina la pantalla de login del stack para evitar que el usuario pueda regresar al login
+        composable("login") {
+            LoginScreen(auth = auth,
+                onLoginSuccess = {
+                    navController.navigate("dashboard") {
                         popUpTo("login") { inclusive = true }
                     }
                 }
             )
         }
 
-        composable("C:\\Users\\AZAEL\\AndroidStudioProjects\\PINGBOND\\app\\src\\main\\java\\com\\example\\pingbond\\DashboardActivity.kt"){
-            //DashboardScreen()
+        composable("dashboard") {
+            DashboardScreen(onNavigate = { /* Implementa navegación interna del Dashboard */ })
         }
     }
 }

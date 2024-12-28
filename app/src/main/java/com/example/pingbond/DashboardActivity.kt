@@ -20,6 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.rememberLottieComposition
@@ -29,13 +32,39 @@ import com.example.pingbond.ui.theme.PINGBONDTheme
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             PINGBONDTheme {
-                DashboardScreen(onNavigate = { /* Handle navigation */ })
+                val navController = rememberNavController()
+
+                // Configuración del NavHost
+                NavHost(
+                    navController = navController,
+                    startDestination = "dashboard"
+                ) {
+                    composable("dashboard") {
+                        DashboardScreen(onNavigate = { route ->
+                            navController.navigate(route)
+                        })
+                    }
+                    composable("messages") {
+                        // Implementación de la pantalla de mensajes
+                    }
+                    composable("contacts") {
+                        // Implementación de la pantalla de contactos
+                    }
+                    composable("calls") {
+                        // Implementación de la pantalla de llamadas
+                    }
+                    composable("notifications") {
+                        // Implementación de la pantalla de notificaciones
+                    }
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun DashboardScreen(onNavigate: (String) -> Unit) {
