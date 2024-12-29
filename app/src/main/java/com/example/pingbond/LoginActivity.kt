@@ -4,9 +4,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
@@ -15,132 +14,100 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.pingbond.ui.theme.PINGBONDTheme
-import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.AuthResult
 import com.google.firebase.auth.FirebaseAuth
-
-val auth = FirebaseAuth.getInstance()
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.auth.ktx.auth
 
 class LoginActivity : ComponentActivity() {
+
+    private lateinit var auth: FirebaseAuth
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Inicializa Firebase Auth
+        auth = Firebase.auth
+
         setContent {
             PINGBONDTheme {
-                // El parámetro `onLoginSuccess` ejecutará la lógica de navegación
-                LoginScreen(
-                    auth = auth,
-                    onLoginSuccess = {
-                        // Al hacer login exitoso, navega al Dashboard
-                        val navController = rememberNavController()
-
-                        // Navegar al Dashboard
-                        navController.navigate("dashboard") {
-                            // Elimina la pantalla de login del stack para que no puedan regresar
-                            popUpTo("login") { inclusive = true }
-                        }
-                    }
-                )
+                val navController = rememberNavController()
+                Navigation(navController = navController, auth = auth)
             }
         }
     }
 }
+
 
 @Composable
-fun LoginScreen(auth: FirebaseAuth, onLoginSuccess: @Composable () -> Unit) {
+fun LoginScreen(auth: FirebaseAuth, navController: NavHostController) {
     var selectedTab by remember { mutableStateOf(0) } // 0 -> Login, 1 -> Registro
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF64B5F6), Color(0xFF1E88E5))
-                )
-            )
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            // Logo o imagen superior
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .background(Color.White, shape = CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = android.R.drawable.ic_menu_info_details),
-                    contentDescription = "Logo",
-                    tint = Color(0xFF1976D2),
-                    modifier = Modifier.size(50.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "PINGBOND",
-                style = MaterialTheme.typography.headlineMedium,
-                color = Color.White,
-                modifier = Modifier.padding(bottom = 32.dp)
+            Tab(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
+                text = { Text("Iniciar Sesión", fontSize = 16.sp) }
             )
+            Tab(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 },
+                text = { Text("Registrarse", fontSize = 16.sp) }
+            )
+        }
 
-            // Tabs con estilo moderno
-            TabRow(
-                selectedTabIndex = selectedTab,
-                containerColor = Color.Transparent,
-                contentColor = Color.White,
-                modifier = Modifier.padding(bottom = 16.dp)
-            ) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Iniciar Sesión", fontSize = 16.sp) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Registrarse", fontSize = 16.sp) }
-                )
-            }
-
-            // Contenido dinámico según el tab seleccionado
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color.White, shape = RoundedCornerShape(16.dp))
-                    .padding(24.dp)
-            ) {
-                when (selectedTab) {
-                    0 -> LoginForm(onLogin = { email, password ->
-                        // Lógica de login
-                    })
-                    1 -> RegisterForm(onRegister = { email, password ->
-                        // Lógica de registro
-                    })
-                }
-            }
+        if (selectedTab == 0) {
+            LoginForm(onLogin = { email, password ->
+                auth.signInWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Log.i("LoginScreen", "Inicio de sesión exitoso")
+                            navController.navigate("dashboard") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        } else {
+                            Log.i("LoginScreen", "Error al iniciar sesión: ${task.exception?.message}")
+                        }
+                    }
+            })
+        } else {
+            RegisterForm(onRegister = { email, password ->
+                auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Log.i("RegisterScreen", "Registro exitoso")
+                            navController.navigate("dashboard") {
+                                popUpTo("login") { inclusive = true }
+                            }
+                        } else {
+                            Log.i("RegisterScreen", "Error al registrarse: ${task.exception?.message}")
+                        }
+                    }
+            })
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginForm(onLogin: (String, String) -> Unit) {
     var email by remember { mutableStateOf("") }
@@ -185,41 +152,21 @@ fun LoginForm(onLogin: (String, String) -> Unit) {
                     errorMessage = "Por favor, completa todos los campos."
                 } else {
                     errorMessage = ""
-                    auth.signInWithEmailAndPassword(email, password).addOnCompleteListener{task ->
-                        if(task.isSuccessful){
-                            Log.i("Estado del log", "LOGIN OK")
-
-                        }else{
-                            //Error
-                            Log.i("Estado del log", "LOGIN KO")
-                        }
-                    }
+                    onLogin(email, password)
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
+            modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(50)
         ) {
             Text(text = "Iniciar Sesión", fontSize = 16.sp)
         }
-
-        Text(
-            text = "¿No tienes una cuenta? Regístrate aquí.",
-            color = Color(0xFF1E88E5),
-            textAlign = TextAlign.Center,
-            modifier = Modifier.clickable { /* Cambiar al tab de registro */ }
-        )
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterForm(onRegister: (String, String) -> Unit) {
-    // Similar a LoginForm pero con botones e inputs relevantes
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var errorMessage by remember { mutableStateOf("") }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         CustomTextField(
@@ -241,21 +188,9 @@ fun RegisterForm(onRegister: (String, String) -> Unit) {
 
         Button(
             onClick = {
-                if (email.isBlank() || password.isBlank()) {
-                    errorMessage = "Por favor, completa todos los campos."
-                } else {
-                    errorMessage = ""
-                    auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener{task ->
-                        if(task.isSuccessful){
-                            Log.i("Estado del register", "REGISTER OK")
-
-                        }else{
-                            //Error
-                            Log.i("Estado del register", "REGISTER KO")
-                        }
-                    }
+                if (email.isNotBlank() && password.isNotBlank()) {
+                    onRegister(email, password)
                 }
-
             },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(50)
@@ -265,48 +200,29 @@ fun RegisterForm(onRegister: (String, String) -> Unit) {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    icon: ImageVector? = null, // Cambiado a ImageVector
+    icon: ImageVector,
     isPassword: Boolean = false
 ) {
     TextField(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        leadingIcon = icon?.let {
-            { Icon(imageVector = it, contentDescription = null, tint = Color.Gray) }
-        },
+        leadingIcon = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF5F5F5), shape = RoundedCornerShape(8.dp))
-            .padding(8.dp),
+            .padding(horizontal = 32.dp),
         colors = TextFieldDefaults.textFieldColors(
             containerColor = Color.Transparent,
-            focusedIndicatorColor = Color(0xFF1E88E5),
-            unfocusedIndicatorColor = Color.Transparent
+            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         )
     )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewLoginScreen() {
-    PINGBONDTheme {
-        LoginScreen(auth = auth, onLoginSuccess = {
-            // Al hacer login exitoso, navega al Dashboard
-            val navController = rememberNavController()
-
-            // Navegar al Dashboard
-            navController.navigate("dashboard") {
-                // Elimina la pantalla de login del stack para que no puedan regresar
-                popUpTo("login") { inclusive = true }
-            }
-        })
-    }
 }

@@ -60,13 +60,7 @@ fun Navigation(navController: NavHostController, auth: FirebaseAuth) {
         }
 
         composable("login") {
-            LoginScreen(auth = auth,
-                onLoginSuccess = {
-                    navController.navigate("dashboard") {
-                        popUpTo("login") { inclusive = true }
-                    }
-                }
-            )
+            LoginScreen(auth = auth, navController = navController)
         }
 
         composable("dashboard") {
