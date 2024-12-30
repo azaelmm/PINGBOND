@@ -4,30 +4,26 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.pingbond.ui.theme.PINGBONDTheme
-
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,7 +33,6 @@ class DashboardActivity : ComponentActivity() {
             PINGBONDTheme {
                 val navController = rememberNavController()
 
-                // Configuración del NavHost
                 NavHost(
                     navController = navController,
                     startDestination = "dashboard"
@@ -47,17 +42,20 @@ class DashboardActivity : ComponentActivity() {
                             navController.navigate(route)
                         })
                     }
-                    composable("messages") {
-                        // Implementación de la pantalla de mensajes
+                    composable("inicio") {
+                        PlaceholderScreen("Inicio")
                     }
-                    composable("contacts") {
-                        // Implementación de la pantalla de contactos
+                    composable("buscar") {
+                        PlaceholderScreen("Buscar")
                     }
-                    composable("calls") {
-                        // Implementación de la pantalla de llamadas
+                    composable("publicar") {
+                        PlaceholderScreen("Publicar")
                     }
-                    composable("notifications") {
-                        // Implementación de la pantalla de notificaciones
+                    composable("notificaciones") {
+                        PlaceholderScreen("Notificaciones")
+                    }
+                    composable("perfil") {
+                        PlaceholderScreen("Perfil")
                     }
                 }
             }
@@ -65,163 +63,149 @@ class DashboardActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 fun DashboardScreen(onNavigate: (String) -> Unit) {
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.lottie))
-
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer)
-                )
-            )
-            .padding(16.dp)
+            .background(Color(0xFFF8F8F8)) // Fondo limpio
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-
-            // Header
             HeaderSection()
 
-            // Main options
-            MainOptionsSection { route -> onNavigate(route) }
+            // Contenido principal
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "Explora contenido aquí",
+                    color = Color(0xFF757575),
+                    fontSize = 18.sp
+                )
+            }
 
-            // Footer
-            FooterSection()
+            BottomNavigationBar(onNavigate)
         }
     }
 }
 
 @Composable
 fun HeaderSection() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF5F5F5)) // Fondo claro
+            .padding(16.dp)
+            .shadow(4.dp, shape = RoundedCornerShape(12.dp), ambientColor = Color.Blue, spotColor = Color.Blue),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
     ) {
-        Text(
-            text = "Bienvenido, Usuario!",
-            style = MaterialTheme.typography.headlineMedium.copy(
+        // Avatar del usuario
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .background(Color(0xFFE0E0E0), shape = CircleShape)
+                .padding(8.dp)
+        )
+
+        Spacer(modifier = Modifier.width(16.dp)) // Separación entre avatar y texto
+
+        // Nombre del usuario y descripción
+        Column {
+            Text(
+                text = "username",
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary
-            ),
-            modifier = Modifier.padding(top = 32.dp, bottom = 8.dp)
-        )
-        Text(
-            text = "Conecta, chatea y comparte momentos",
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-            ),
-            textAlign = TextAlign.Center
-        )
+                fontSize = 20.sp,
+                color = Color.Black
+            )
+            Text(
+                text = "324 posts | 4348 followers",
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f)) // Empuja el ícono de ajustes al extremo derecho
+
+        // Icono de ajustes
+        IconButton(onClick = { /* Acción de ajustes */ }) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Ajustes",
+                tint = Color(0xFF4A4A4A),
+                modifier = Modifier.size(28.dp)
+            )
+        }
     }
 }
 
 @Composable
-fun MainOptionsSection(onOptionClick: (String) -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+fun BottomNavigationBar(onNavigate: (String) -> Unit) {
+    val selectedOption = remember { mutableStateOf("inicio") }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(8.dp)
+            .shadow(4.dp, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), ambientColor = Color.Blue,
+                spotColor = Color.Blue),
+
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         val options = listOf(
-            DashboardOption("Mensajes", Icons.Default.MailOutline, Color(0xFF42A5F5), "messages"),
-            DashboardOption("Contactos", Icons.Default.Person, Color(0xFF29B6F6), "contacts"),
-            DashboardOption("Llamadas", Icons.Default.Call, Color(0xFF26C6DA), "calls"),
-            DashboardOption("Notificaciones", Icons.Default.Notifications, Color(0xFF00ACC1), "notifications")
+            Pair(Icons.Default.Home, "Inicio"),
+            Pair(Icons.Default.Search, "Buscar"),
+            Pair(Icons.Default.AddCircleOutline, "Publicar"),
+            Pair(Icons.Default.FavoriteBorder, "Notificaciones"),
+            Pair(Icons.Default.Person, "Perfil")
         )
 
-        options.chunked(2).forEach { rowOptions ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                rowOptions.forEach { option ->
-                    OptionCard(
-                        title = option.title,
-                        icon = option.icon,
-                        backgroundColor = option.color,
-                        onClick = { onOptionClick(option.route) }
+        options.forEach { (icon, label) ->
+            val isSelected = label.lowercase() == selectedOption.value
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = {
+                    selectedOption.value = label.lowercase()
+                    onNavigate(label.lowercase())
+                }) {
+                    Icon(
+                        icon,
+                        contentDescription = label,
+                        tint = if (isSelected) Color(0xFF6200EE) else Color.Gray,
+                        modifier = Modifier.size(28.dp)
                     )
                 }
+                Text(
+                    text = label,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = if (isSelected) Color(0xFF6200EE) else Color.Gray
+                )
             }
         }
     }
 }
 
 @Composable
-fun FooterSection() {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Divider(
-            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f),
-            thickness = 1.dp,
-            modifier = Modifier.padding(vertical = 16.dp)
-        )
-        Text(
-            text = "PingBond © 2024",
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f)
-            )
-        )
-    }
-}
-
-@Composable
-fun OptionCard(
-    title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    backgroundColor: Color,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+fun PlaceholderScreen(name: String) {
+    Box(
         modifier = Modifier
-            .width(120.dp)
-            .clickable { onClick() }
+            .fillMaxSize()
+            .background(Color.LightGray),
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(72.dp)
-                .background(color = backgroundColor, shape = CircleShape),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                icon,
-                contentDescription = title,
-                tint = Color.White,
-                modifier = Modifier.size(36.dp)
-            )
-        }
         Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier.padding(top = 8.dp)
+            text = "Pantalla: $name",
+            style = MaterialTheme.typography.headlineMedium.copy(color = Color.White)
         )
-    }
-}
-
-data class DashboardOption(
-    val title: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val color: Color,
-    val route: String
-)
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewDashboardScreen() {
-    PINGBONDTheme {
-        DashboardScreen(onNavigate = {})
     }
 }
