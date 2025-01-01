@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
@@ -47,7 +48,6 @@ class LoginActivity : ComponentActivity() {
         }
     }
 }
-
 
 @Composable
 fun LoginScreen(auth: FirebaseAuth, navController: NavHostController) {
@@ -86,7 +86,10 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavHostController) {
                                 popUpTo("login") { inclusive = true }
                             }
                         } else {
-                            Log.i("LoginScreen", "Error al iniciar sesión: ${task.exception?.message}")
+                            Log.i(
+                                "LoginScreen",
+                                "Error al iniciar sesión: ${task.exception?.message}"
+                            )
                         }
                     }
             })
@@ -100,7 +103,10 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavHostController) {
                                 popUpTo("login") { inclusive = true }
                             }
                         } else {
-                            Log.i("RegisterScreen", "Error al registrarse: ${task.exception?.message}")
+                            Log.i(
+                                "RegisterScreen",
+                                "Error al registrarse: ${task.exception?.message}"
+                            )
                         }
                     }
             })
@@ -167,15 +173,28 @@ fun LoginForm(onLogin: (String, String) -> Unit) {
 fun RegisterForm(onRegister: (String, String) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
+
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        CustomTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = "Nombre de Usuario",
+            icon = Icons.Default.Person
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
         CustomTextField(
             value = email,
             onValueChange = { email = it },
             label = "Correo Electrónico",
             icon = Icons.Default.Person
         )
+
         Spacer(modifier = Modifier.height(16.dp))
+
         CustomTextField(
             value = password,
             onValueChange = { password = it },

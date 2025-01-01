@@ -9,6 +9,7 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2024.04.01"
+firebaseBom = "33.1.1"
 lottieCompose = "6.0.0"
 materialIconsExtended = "1.7.6"
 navigationRuntimeKtx = "2.8.5"
@@ -40,6 +41,11 @@ androidx-datastore-core-android = { group = "androidx.datastore", name = "datast
 firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx", version.ref = "firebaseAuthKtx" }
 lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieCompose" }
 kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinSerialization" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-firestore = {module= "com.google.firebase:firebase-firestore"}
+
+
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
