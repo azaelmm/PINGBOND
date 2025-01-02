@@ -3,14 +3,18 @@ package com.example.pingbond.DashboardScreens
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.Animatable
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,7 +25,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,20 +34,43 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class ProfileScreen : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             PINGBONDTheme {
-                ProfileScreenContent()
+                ProfileScreenContentWithAnimation()
             }
         }
     }
 }
 
 @Composable
-fun ProfileScreenContent() {
+fun AnimatedBackground() {
+    val colors = listOf(Color(0xFF3D5AFE), Color(0xFF1E88E5))
+    val animatedColor = remember { Animatable(colors.first()) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            animatedColor.animateTo(
+                targetValue = colors.random(),
+                animationSpec = tween(durationMillis = 3000, easing = FastOutSlowInEasing)
+            )
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(animatedColor.value, colors.last())
+                )
+            )
+    )
+}
+
+@Composable
+fun ProfileScreenContentWithAnimation() {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     val userId = auth.currentUser?.uid
@@ -66,92 +92,104 @@ fun ProfileScreenContent() {
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF64B5F6), Color(0xFF1E88E5))
-                )
-            )
-            .padding(16.dp)
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        ProfileHeader(username = username, email = email, profilePicUrl = profilePicUrl)
-        Spacer(modifier = Modifier.height(16.dp))
-        PostsSection(posts = posts)
+        AnimatedBackground()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            ProfileHeader(username, email, profilePicUrl)
+            PostsSection(posts)
+        }
     }
 }
 
 @Composable
 fun ProfileHeader(username: String, email: String, profilePicUrl: String) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Imagen de perfil
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(100.dp)
                 .clip(CircleShape)
-                .background(Color.Gray)
+                .background(Color.Gray),
+            contentAlignment = Alignment.Center
         ) {
-            if (profilePicUrl.isNotEmpty()) {
-                // Aquí podrías cargar la imagen de perfil con Coil o Glide
-                Image(
-                    painter = painterResource(id = R.drawable.ic_profile_placeholder_foreground),
-                    contentDescription = "Imagen de Perfil",
-                    modifier = Modifier.fillMaxSize()
-                )
+            Image(
+                painter = painterResource(id = R.drawable.ic_profile_placeholder_foreground),
+                contentDescription = "Imagen de Perfil",
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = username,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+        Text(
+            text = email,
+            fontSize = 14.sp,
+            color = Color.White.copy(alpha = 0.8f)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            IconButton(onClick = { /* Acción de editar */ }) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = Color.White
+                    )
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.width(16.dp))
-
-        // Información del usuario
-        Column {
-            Text(
-                text = username,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Text(
-                text = email,
-                fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.8f)
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Botón de configuración
-        IconButton(onClick = { /* Acción de configuración */ }) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Configuración",
-                tint = Color.White
-            )
+            IconButton(onClick = { /* Acción de configuración */ }) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Configuración",
+                        tint = Color.White
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
 fun PostsSection(posts: List<String>) {
-    Text(
-        text = "Tus publicaciones",
-        fontSize = 18.sp,
-        fontWeight = FontWeight.Bold,
-        color = Color.White,
-        modifier = Modifier.padding(bottom = 8.dp)
-    )
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(posts.size) { index ->
-            PostCard(postContent = posts[index])
+    Column {
+        Text(
+            text = "Publicaciones recientes",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(posts.size) { index ->
+                PostCard(postContent = posts[index])
+            }
         }
     }
 }
@@ -180,7 +218,8 @@ fun PostCard(postContent: String) {
 
 @Preview(showBackground = true)
 @Composable
-fun ProfileScreenPreview() {
+fun ProfileScreenPreviewWithAnimation() {
     PINGBONDTheme {
-        ProfileScreenContent() }
+        ProfileScreenContentWithAnimation()
+    }
 }

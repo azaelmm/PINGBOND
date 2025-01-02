@@ -65,7 +65,7 @@ dependencies {
     implementation(libs.kotlin.serialization.json)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.firebase.firestore)
-
+    implementation(libs.coil.compose)
 
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
