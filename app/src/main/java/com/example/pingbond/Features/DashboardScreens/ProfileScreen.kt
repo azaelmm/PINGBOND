@@ -1,4 +1,4 @@
-package com.example.pingbond.DashboardScreens
+package com.example.pingbond.Features.DashboardScreens
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

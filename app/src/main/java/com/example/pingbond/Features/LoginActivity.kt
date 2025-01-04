@@ -1,31 +1,38 @@
-package com.example.pingbond
+package com.example.pingbond.Features
 
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AssignmentInd
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Mail
+import androidx.compose.material.icons.filled.Man
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.pingbond.R
+import com.example.pingbond.ui.theme.OnPrimary
 import com.example.pingbond.ui.theme.PINGBONDTheme
+import com.example.pingbond.ui.theme.PrimaryVariant
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.auth.ktx.auth
@@ -53,65 +60,89 @@ class LoginActivity : ComponentActivity() {
 fun LoginScreen(auth: FirebaseAuth, navController: NavHostController) {
     var selectedTab by remember { mutableStateOf(0) } // 0 -> Login, 1 -> Registro
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            Tab(
-                selected = selectedTab == 0,
-                onClick = { selectedTab = 0 },
-                text = { Text("Iniciar Sesión", fontSize = 16.sp) }
-            )
-            Tab(
-                selected = selectedTab == 1,
-                onClick = { selectedTab = 1 },
-                text = { Text("Registrarse", fontSize = 16.sp) }
-            )
-        }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(id = R.drawable.bglogin),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        ) // Aquí puedes añadir otros composables sobre la imagen de fondo
 
-        if (selectedTab == 0) {
-            LoginForm(onLogin = { email, password ->
-                auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Log.i("LoginScreen", "Inicio de sesión exitoso")
-                            navController.navigate("dashboard") {
-                                popUpTo("login") { inclusive = true }
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(8.dp, RoundedCornerShape(10.dp))
+                    .background(color = PrimaryVariant)
+                    .padding(vertical = 10.dp)
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = {Text("Iniciar Sesión",
+                        color =  Color.White,
+                        fontSize = 16.sp
+                    )}
+
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = {Text("Registrarse",
+                        color = Color.White,
+                        fontSize = 16.sp
+                    )}
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+
+            if (selectedTab == 0) {
+                LoginForm(onLogin = { email, password ->
+                    auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Log.i("LoginScreen", "Inicio de sesión exitoso")
+                                navController.navigate("dashboard") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            } else {
+                                Log.i(
+                                    "LoginScreen",
+                                    "Error al iniciar sesión: ${task.exception?.message}"
+                                )
                             }
-                        } else {
-                            Log.i(
-                                "LoginScreen",
-                                "Error al iniciar sesión: ${task.exception?.message}"
-                            )
                         }
-                    }
-            })
-        } else {
-            RegisterForm(onRegister = { email, password ->
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Log.i("RegisterScreen", "Registro exitoso")
-                            navController.navigate("dashboard") {
-                                popUpTo("login") { inclusive = true }
+                })
+            } else {
+                RegisterForm(onRegister = { email, password ->
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Log.i("RegisterScreen", "Registro exitoso")
+                                navController.navigate("dashboard") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            } else {
+                                Log.i(
+                                    "RegisterScreen",
+                                    "Error al registrarse: ${task.exception?.message}"
+                                )
                             }
-                        } else {
-                            Log.i(
-                                "RegisterScreen",
-                                "Error al registrarse: ${task.exception?.message}"
-                            )
                         }
-                    }
-            })
+                })
+            }
         }
     }
+
 }
 
 @Composable
@@ -128,7 +159,7 @@ fun LoginForm(onLogin: (String, String) -> Unit) {
             value = email,
             onValueChange = { email = it },
             label = "Correo Electrónico",
-            icon = Icons.Default.Person
+            icon = Icons.Default.Mail
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -161,6 +192,10 @@ fun LoginForm(onLogin: (String, String) -> Unit) {
                     onLogin(email, password)
                 }
             },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PrimaryVariant,
+                contentColor = OnPrimary),
+
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(50)
         ) {
@@ -182,7 +217,7 @@ fun RegisterForm(onRegister: (String, String) -> Unit) {
             value = username,
             onValueChange = { username = it },
             label = "Nombre de Usuario",
-            icon = Icons.Default.Person
+            icon = Icons.Default.Man
         )
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -190,7 +225,7 @@ fun RegisterForm(onRegister: (String, String) -> Unit) {
             value = email,
             onValueChange = { email = it },
             label = "Correo Electrónico",
-            icon = Icons.Default.Person
+            icon = Icons.Default.Mail
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -211,6 +246,10 @@ fun RegisterForm(onRegister: (String, String) -> Unit) {
                     onRegister(email, password)
                 }
             },
+            colors = ButtonDefaults.buttonColors(
+                containerColor = PrimaryVariant,
+                contentColor = OnPrimary),
+
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(50)
         ) {
@@ -232,16 +271,17 @@ fun CustomTextField(
     TextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        leadingIcon = { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+        label = { Text(label, fontSize = 14.sp) },
+        leadingIcon = {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 32.dp),
-        colors = TextFieldDefaults.textFieldColors(
-            containerColor = Color.Transparent,
-            focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-            unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-        )
+            .background(Color.Transparent, shape = RoundedCornerShape(8.dp))
     )
 }

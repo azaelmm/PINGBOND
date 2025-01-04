@@ -18,6 +18,7 @@ kotlinSerialization = "1.6.3"
 datastoreCoreAndroid = "1.1.1"
 firebaseAuthKtx = "23.1.0"
 coil = "2.4.0"
+firebaseStorageKtx = "21.0.1"
 
 
 [libraries]
@@ -46,6 +47,7 @@ kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializat
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = {module= "com.google.firebase:firebase-firestore"}
 coil_compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 
 
 [plugins]

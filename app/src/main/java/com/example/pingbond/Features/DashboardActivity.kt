@@ -1,4 +1,4 @@
-package com.example.pingbond
+package com.example.pingbond.Features
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.pingbond.Features.DashboardScreens.CreatePostScreenEnhanced
+import com.example.pingbond.Features.DashboardScreens.ProfileScreenContentWithAnimation
 import com.example.pingbond.ui.theme.PINGBONDTheme
 
 class DashboardActivity : ComponentActivity() {
@@ -35,27 +37,24 @@ class DashboardActivity : ComponentActivity() {
 
                 NavHost(
                     navController = navController,
-                    startDestination = "dashboard"
+                    startDestination = "inicio"
                 ) {
-                    composable("dashboard") {
+                    composable("inicio") {
                         DashboardScreen(onNavigate = { route ->
                             navController.navigate(route)
                         })
-                    }
-                    composable("inicio") {
-                        PlaceholderScreen("Inicio")
                     }
                     composable("buscar") {
                         PlaceholderScreen("Buscar")
                     }
                     composable("publicar") {
-                        PlaceholderScreen("Publicar")
+                        CreatePostScreenEnhanced()
                     }
                     composable("notificaciones") {
                         PlaceholderScreen("Notificaciones")
                     }
                     composable("perfil") {
-                        PlaceholderScreen("Perfil")
+                        ProfileScreenContentWithAnimation()
                     }
                 }
             }
@@ -162,30 +161,30 @@ fun BottomNavigationBar(onNavigate: (String) -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         val options = listOf(
-            Pair(Icons.Default.Home, "Inicio"),
-            Pair(Icons.Default.Search, "Buscar"),
-            Pair(Icons.Default.AddCircleOutline, "Publicar"),
-            Pair(Icons.Default.FavoriteBorder, "Notificaciones"),
-            Pair(Icons.Default.Person, "Perfil")
+            Pair(Icons.Default.Home, "inicio"),
+            Pair(Icons.Default.Search, "buscar"),
+            Pair(Icons.Default.AddCircleOutline, "publicar"),
+            Pair(Icons.Default.FavoriteBorder, "notificaciones"),
+            Pair(Icons.Default.Person, "perfil")
         )
 
-        options.forEach { (icon, label) ->
-            val isSelected = label.lowercase() == selectedOption.value
+        options.forEach { (icon, route) ->
+            val isSelected = route == selectedOption.value
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 IconButton(onClick = {
-                    selectedOption.value = label.lowercase()
-                    onNavigate(label.lowercase())
+                    selectedOption.value = route
+                    onNavigate(route)
                 }) {
                     Icon(
                         icon,
-                        contentDescription = label,
+                        contentDescription = route,
                         tint = if (isSelected) Color(0xFF6200EE) else Color.Gray,
                         modifier = Modifier.size(28.dp)
                     )
                 }
                 Text(
-                    text = label,
+                    text = route,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
                     color = if (isSelected) Color(0xFF6200EE) else Color.Gray
@@ -194,6 +193,7 @@ fun BottomNavigationBar(onNavigate: (String) -> Unit) {
         }
     }
 }
+
 
 @Composable
 fun PlaceholderScreen(name: String) {
