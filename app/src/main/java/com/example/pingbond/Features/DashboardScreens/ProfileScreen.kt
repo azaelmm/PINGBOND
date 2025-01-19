@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.Animatable
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -14,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -28,6 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.pingbond.R
 import com.example.pingbond.ui.theme.PINGBONDTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -38,7 +40,8 @@ class ProfileScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             PINGBONDTheme {
-                ProfileScreenContentWithAnimation()
+                val navController = rememberNavController()
+                ProfileScreenContentWithAnimation(navController = navController)
             }
         }
     }
@@ -70,7 +73,7 @@ fun AnimatedBackground() {
 }
 
 @Composable
-fun ProfileScreenContentWithAnimation() {
+fun ProfileScreenContentWithAnimation(navController: NavController) {
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     val userId = auth.currentUser?.uid
@@ -102,20 +105,41 @@ fun ProfileScreenContentWithAnimation() {
                 .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            ProfileHeader(username, email, profilePicUrl)
+            ProfileHeader(username, email, profilePicUrl, navController)
             PostsSection(posts)
         }
     }
 }
 
 @Composable
-fun ProfileHeader(username: String, email: String, profilePicUrl: String) {
+fun ProfileHeader(username: String, email: String, profilePicUrl: String, navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Volver",
+                    tint = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = username,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -219,7 +243,8 @@ fun PostCard(postContent: String) {
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreviewWithAnimation() {
+    val navController = rememberNavController()
     PINGBONDTheme {
-        ProfileScreenContentWithAnimation()
+        ProfileScreenContentWithAnimation(navController = navController)
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.*
@@ -25,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.pingbond.ui.theme.PINGBONDTheme
 import com.google.firebase.firestore.FirebaseFirestore
@@ -37,7 +40,8 @@ class CreatePostScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             PINGBONDTheme {
-                CreatePostScreenEnhanced()
+                val navController = rememberNavController()
+                CreatePostScreenEnhanced(navController = navController)
             }
         }
     }
@@ -45,7 +49,7 @@ class CreatePostScreen : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePostScreenEnhanced() {
+fun CreatePostScreenEnhanced(navController: NavController) {
     var postContent by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -73,15 +77,27 @@ fun CreatePostScreenEnhanced() {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Title
-            Text(
-                text = "Nueva Publicación",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Volver",
+                        tint = Color.White
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "Nueva Publicación",
+                    fontSize = 26.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
 
-            // Spacer
             Spacer(modifier = Modifier.height(16.dp))
 
             // Content Card
@@ -143,7 +159,6 @@ fun CreatePostScreenEnhanced() {
                 }
             }
 
-            // Spacer
             Spacer(modifier = Modifier.height(16.dp))
 
             // Publish Button
@@ -211,7 +226,8 @@ fun uploadPost(
 @Preview(showBackground = true)
 @Composable
 fun CreatePostScreenEnhancedPreview() {
+    val navController = rememberNavController()
     PINGBONDTheme {
-        CreatePostScreenEnhanced()
+        CreatePostScreenEnhanced(navController = navController)
     }
 }

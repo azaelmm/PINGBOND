@@ -9,6 +9,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.pingbond.Features.DashboardScreens.CreatePostScreenEnhanced
+import com.example.pingbond.Features.DashboardScreens.ProfileScreenContentWithAnimation
 import com.example.pingbond.ui.theme.PINGBONDTheme
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -64,7 +66,28 @@ fun Navigation(navController: NavHostController, auth: FirebaseAuth) {
         }
 
         composable("dashboard") {
-            DashboardScreen(onNavigate = { /* Implementa navegación interna del Dashboard */ })
+            DashboardScreen(navController)
         }
+
+        composable("inicio") {
+            DashboardScreen(navController = navController)
+        }
+
+        composable("buscar") {
+            PlaceholderScreen("Buscar")
+        }
+
+        composable("publicar") {
+            CreatePostScreenEnhanced(navController)
+        }
+
+        composable("notificaciones") {
+            PlaceholderScreen("Notificaciones")
+        }
+
+        composable("perfil") {
+            ProfileScreenContentWithAnimation(navController)
+        }
+
     }
 }

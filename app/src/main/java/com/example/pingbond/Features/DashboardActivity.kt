@@ -1,6 +1,7 @@
 package com.example.pingbond.Features
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -11,8 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -20,8 +20,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.pingbond.Features.DashboardScreens.CreatePostScreenEnhanced
 import com.example.pingbond.Features.DashboardScreens.ProfileScreenContentWithAnimation
@@ -37,24 +39,22 @@ class DashboardActivity : ComponentActivity() {
 
                 NavHost(
                     navController = navController,
-                    startDestination = "inicio"
+                    startDestination = "splash"
                 ) {
                     composable("inicio") {
-                        DashboardScreen(onNavigate = { route ->
-                            navController.navigate(route)
-                        })
+                        DashboardScreen(navController = navController)
                     }
                     composable("buscar") {
                         PlaceholderScreen("Buscar")
                     }
                     composable("publicar") {
-                        CreatePostScreenEnhanced()
+                        CreatePostScreenEnhanced(navController)
                     }
                     composable("notificaciones") {
                         PlaceholderScreen("Notificaciones")
                     }
                     composable("perfil") {
-                        ProfileScreenContentWithAnimation()
+                        ProfileScreenContentWithAnimation(navController)
                     }
                 }
             }
@@ -63,7 +63,7 @@ class DashboardActivity : ComponentActivity() {
 }
 
 @Composable
-fun DashboardScreen(onNavigate: (String) -> Unit) {
+fun DashboardScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -90,7 +90,7 @@ fun DashboardScreen(onNavigate: (String) -> Unit) {
                 )
             }
 
-            BottomNavigationBar(onNavigate)
+            BottomNavigationBar(navController)
         }
     }
 }
@@ -146,17 +146,21 @@ fun HeaderSection() {
 }
 
 @Composable
-fun BottomNavigationBar(onNavigate: (String) -> Unit) {
-    val selectedOption = remember { mutableStateOf("inicio") }
+fun BottomNavigationBar(navController: NavController) {
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
             .padding(8.dp)
-            .shadow(4.dp, shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), ambientColor = Color.Blue,
-                spotColor = Color.Blue),
-
+            .shadow(
+                4.dp,
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                ambientColor = Color.Blue,
+                spotColor = Color.Blue
+            ),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -169,12 +173,28 @@ fun BottomNavigationBar(onNavigate: (String) -> Unit) {
         )
 
         options.forEach { (icon, route) ->
-            val isSelected = route == selectedOption.value
+            val isSelected = route == currentRoute
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 IconButton(onClick = {
-                    selectedOption.value = route
-                    onNavigate(route)
+
+                    if (navController != null) {
+                        Log.i("Navigation", "NavController is not null")
+                    }
+
+                    if (currentRoute != route) {
+                        Log.i("Navigation", "Navigating to $route")
+                        navController.navigate(route) {
+                            Log.i("entro", "Navigating to $route")
+                            popUpTo(navController.graph.startDestinationId) {
+                                Log.i("entrisimo", "Navigating to $route")
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                            Log.i("s", "Navigating to $route")
+                        }
+                    }
                 }) {
                     Icon(
                         icon,
@@ -193,7 +213,6 @@ fun BottomNavigationBar(onNavigate: (String) -> Unit) {
         }
     }
 }
-
 
 @Composable
 fun PlaceholderScreen(name: String) {
