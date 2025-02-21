@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -52,14 +53,19 @@ class CreatePostScreen : ComponentActivity() {
 fun CreatePostScreenEnhanced(navController: NavController) {
     var postContent by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Firebase references
     val db = FirebaseFirestore.getInstance()
     val storage = FirebaseStorage.getInstance().reference
 
+    // Nuevo método para seleccionar imágenes
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-        onResult = { uri: Uri? -> selectedImageUri = uri }
+        contract = ActivityResultContracts.PickVisualMedia(),
+        onResult = { uri: Uri? ->
+            selectedImageUri = uri
+            errorMessage = if (uri == null) "No se seleccionó ninguna imagen" else null
+        }
     )
 
     Box(
@@ -77,6 +83,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Barra superior con botón de regreso
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -100,7 +107,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Content Card
+            // Tarjeta para escribir el contenido y subir la imagen
             Card(
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(8.dp),
@@ -114,7 +121,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
                         .padding(16.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Text Field for Post
+                    // Campo de texto para el contenido
                     TextField(
                         value = postContent,
                         onValueChange = { postContent = it },
@@ -131,11 +138,11 @@ fun CreatePostScreenEnhanced(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Image Preview or Add Button
+                    // Muestra la imagen seleccionada o botón para añadir una
                     if (selectedImageUri != null) {
                         Image(
                             painter = rememberAsyncImagePainter(selectedImageUri),
-                            contentDescription = "Selected Image",
+                            contentDescription = "Imagen seleccionada",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(150.dp)
@@ -144,30 +151,35 @@ fun CreatePostScreenEnhanced(navController: NavController) {
                         )
                     } else {
                         OutlinedButton(
-                            onClick = { imagePickerLauncher.launch("image/*") },
+                            onClick = { imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Image,
-                                contentDescription = "Add Image",
+                                contentDescription = "Agregar Imagen",
                                 tint = Color.Gray
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Agregar Imagen")
+                            Text("Seleccionar Imagen")
                         }
+                    }
+
+                    // Mostrar error si la imagen no se selecciona correctamente
+                    errorMessage?.let {
+                        Text(text = it, color = Color.Red, fontSize = 14.sp)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Publish Button
+            // Botón para publicar
             Button(
                 onClick = {
                     if (postContent.isNotBlank() && selectedImageUri != null) {
                         uploadPost(postContent, selectedImageUri!!, db, storage)
                     } else {
-                        println("Completa todos los campos antes de publicar.")
+                        errorMessage = "Completa todos los campos antes de publicar."
                     }
                 },
                 shape = RoundedCornerShape(16.dp),
@@ -177,7 +189,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Publish",
+                    contentDescription = "Publicar",
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -192,6 +204,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
     }
 }
 
+// Función para subir publicación a Firebase
 fun uploadPost(
     postContent: String,
     imageUri: Uri,
@@ -211,15 +224,15 @@ fun uploadPost(
                 )
                 db.collection("posts").document(postId).set(post)
                     .addOnSuccessListener {
-                        println("Publicación creada exitosamente.")
+                        println("✅ Publicación creada exitosamente.")
                     }
                     .addOnFailureListener {
-                        println("Error al guardar la publicación: ${it.message}")
+                        println("❌ Error al guardar la publicación: ${it.message}")
                     }
             }
         }
         .addOnFailureListener {
-            println("Error al subir la imagen: ${it.message}")
+            println("❌ Error al subir la imagen: ${it.message}")
         }
 }
 
