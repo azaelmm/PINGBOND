@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -53,19 +52,14 @@ class CreatePostScreen : ComponentActivity() {
 fun CreatePostScreenEnhanced(navController: NavController) {
     var postContent by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Firebase references
     val db = FirebaseFirestore.getInstance()
     val storage = FirebaseStorage.getInstance().reference
 
-    // Nuevo método para seleccionar imágenes
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia(),
-        onResult = { uri: Uri? ->
-            selectedImageUri = uri
-            errorMessage = if (uri == null) "No se seleccionó ninguna imagen" else null
-        }
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? -> selectedImageUri = uri }
     )
 
     Box(
@@ -83,7 +77,6 @@ fun CreatePostScreenEnhanced(navController: NavController) {
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Barra superior con botón de regreso
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -96,7 +89,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
                         tint = Color.White
                     )
                 }
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Nueva Publicación",
                     fontSize = 26.sp,
@@ -107,7 +100,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Tarjeta para escribir el contenido y subir la imagen
+            // Content Card
             Card(
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(8.dp),
@@ -121,7 +114,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
                         .padding(16.dp),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Campo de texto para el contenido
+                    // Text Field for Post
                     TextField(
                         value = postContent,
                         onValueChange = { postContent = it },
@@ -138,11 +131,11 @@ fun CreatePostScreenEnhanced(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Muestra la imagen seleccionada o botón para añadir una
+                    // Image Preview or Add Button
                     if (selectedImageUri != null) {
                         Image(
                             painter = rememberAsyncImagePainter(selectedImageUri),
-                            contentDescription = "Imagen seleccionada",
+                            contentDescription = "Selected Image",
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(150.dp)
@@ -151,35 +144,30 @@ fun CreatePostScreenEnhanced(navController: NavController) {
                         )
                     } else {
                         OutlinedButton(
-                            onClick = { imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                            onClick = { imagePickerLauncher.launch("image/*") },
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Image,
-                                contentDescription = "Agregar Imagen",
+                                contentDescription = "Add Image",
                                 tint = Color.Gray
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Seleccionar Imagen")
+                            Text("Agregar Imagen")
                         }
-                    }
-
-                    // Mostrar error si la imagen no se selecciona correctamente
-                    errorMessage?.let {
-                        Text(text = it, color = Color.Red, fontSize = 14.sp)
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón para publicar
+            // Publish Button
             Button(
                 onClick = {
                     if (postContent.isNotBlank() && selectedImageUri != null) {
                         uploadPost(postContent, selectedImageUri!!, db, storage)
                     } else {
-                        errorMessage = "Completa todos los campos antes de publicar."
+                        println("Completa todos los campos antes de publicar.")
                     }
                 },
                 shape = RoundedCornerShape(16.dp),
@@ -189,7 +177,7 @@ fun CreatePostScreenEnhanced(navController: NavController) {
             ) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Publicar",
+                    contentDescription = "Publish",
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -204,7 +192,6 @@ fun CreatePostScreenEnhanced(navController: NavController) {
     }
 }
 
-// Función para subir publicación a Firebase
 fun uploadPost(
     postContent: String,
     imageUri: Uri,
@@ -224,15 +211,15 @@ fun uploadPost(
                 )
                 db.collection("posts").document(postId).set(post)
                     .addOnSuccessListener {
-                        println("✅ Publicación creada exitosamente.")
+                        println("Publicación creada exitosamente.")
                     }
                     .addOnFailureListener {
-                        println("❌ Error al guardar la publicación: ${it.message}")
+                        println("Error al guardar la publicación: ${it.message}")
                     }
             }
         }
         .addOnFailureListener {
-            println("❌ Error al subir la imagen: ${it.message}")
+            println("Error al subir la imagen: ${it.message}")
         }
 }
 
