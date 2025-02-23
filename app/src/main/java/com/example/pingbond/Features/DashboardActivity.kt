@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -39,7 +40,7 @@ class DashboardActivity : ComponentActivity() {
 
                 NavHost(
                     navController = navController,
-                    startDestination = "splash"
+                    startDestination = "inicio"
                 ) {
                     composable("inicio") {
                         DashboardScreen(navController = navController)
@@ -67,7 +68,7 @@ fun DashboardScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF8F8F8)) // Fondo limpio
+            .background(Color(0xFFFAFAFA)) // Fondo más suave
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -86,7 +87,8 @@ fun DashboardScreen(navController: NavController) {
                 Text(
                     "Explora contenido aquí",
                     color = Color(0xFF757575),
-                    fontSize = 18.sp
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium
                 )
             }
 
@@ -100,9 +102,14 @@ fun HeaderSection() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFF5F5F5)) // Fondo claro
+            .background(Color.White)
             .padding(16.dp)
-            .shadow(4.dp, shape = RoundedCornerShape(12.dp), ambientColor = Color.Blue, spotColor = Color.Blue),
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(12.dp),
+                ambientColor = Color(0xFF1E88E5), // Sombra azulada
+                spotColor = Color(0xFF1E88E5) // Sombra azulada
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
@@ -110,8 +117,8 @@ fun HeaderSection() {
         Box(
             modifier = Modifier
                 .size(60.dp)
-                .background(Color(0xFFE0E0E0), shape = CircleShape)
-                .padding(8.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFE0E0E0)) // Color de fondo del avatar
         )
 
         Spacer(modifier = Modifier.width(16.dp)) // Separación entre avatar y texto
@@ -122,24 +129,30 @@ fun HeaderSection() {
                 text = "username",
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
-                color = Color.Black
+                color = Color(0xFF333333) // Texto oscuro
             )
             Text(
                 text = "324 posts | 4348 followers",
                 fontSize = 14.sp,
-                color = Color.Gray
+                color = Color(0xFF757575) // Texto gris
             )
         }
 
         Spacer(modifier = Modifier.weight(1f)) // Empuja el ícono de ajustes al extremo derecho
 
         // Icono de ajustes
-        IconButton(onClick = { /* Acción de ajustes */ }) {
+        IconButton(
+            onClick = { /* Acción de ajustes */ },
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFF5F5F5)) // Fondo circular para el ícono
+        ) {
             Icon(
                 imageVector = Icons.Default.Settings,
                 contentDescription = "Ajustes",
                 tint = Color(0xFF4A4A4A),
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
     }
@@ -154,12 +167,12 @@ fun BottomNavigationBar(navController: NavController) {
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(8.dp)
+            .padding(vertical = 8.dp)
             .shadow(
-                4.dp,
+                elevation = 8.dp,
                 shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                ambientColor = Color.Blue,
-                spotColor = Color.Blue
+                ambientColor = Color(0xFF1E88E5), // Sombra azulada
+                spotColor = Color(0xFF1E88E5) // Sombra azulada
             ),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
@@ -168,46 +181,42 @@ fun BottomNavigationBar(navController: NavController) {
             Pair(Icons.Default.Home, "inicio"),
             Pair(Icons.Default.Search, "buscar"),
             Pair(Icons.Default.AddCircleOutline, "publicar"),
-            Pair(Icons.Default.FavoriteBorder, "notificaciones"),
             Pair(Icons.Default.Person, "perfil")
         )
 
         options.forEach { (icon, route) ->
             val isSelected = route == currentRoute
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                IconButton(onClick = {
-
-                    if (navController != null) {
-                        Log.i("Navigation", "NavController is not null")
-                    }
-
-                    if (currentRoute != route) {
-                        Log.i("Navigation", "Navigating to $route")
-                        navController.navigate(route) {
-                            Log.i("entro", "Navigating to $route")
-                            popUpTo(navController.graph.startDestinationId) {
-                                Log.i("entrisimo", "Navigating to $route")
-                                saveState = true
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                IconButton(
+                    onClick = {
+                        if (currentRoute != route) {
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            launchSingleTop = true
-                            restoreState = true
-                            Log.i("s", "Navigating to $route")
                         }
-                    }
-                }) {
+                    },
+                    modifier = Modifier.size(48.dp)
+                ) {
                     Icon(
                         icon,
                         contentDescription = route,
-                        tint = if (isSelected) Color(0xFF6200EE) else Color.Gray,
-                        modifier = Modifier.size(28.dp)
+                        tint = if (isSelected) Color(0xFF6200EE) else Color(0xFF757575),
+                        modifier = Modifier.size(24.dp)
                     )
                 }
                 Text(
                     text = route,
                     fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = if (isSelected) Color(0xFF6200EE) else Color.Gray
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isSelected) Color(0xFF6200EE) else Color(0xFF757575)
                 )
             }
         }
@@ -219,12 +228,15 @@ fun PlaceholderScreen(name: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.LightGray),
+            .background(Color(0xFFFAFAFA)), // Fondo suave
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = "Pantalla: $name",
-            style = MaterialTheme.typography.headlineMedium.copy(color = Color.White)
+            style = MaterialTheme.typography.headlineMedium.copy(
+                color = Color(0xFF333333), // Texto oscuro
+                fontWeight = FontWeight.Bold
+            )
         )
     }
 }

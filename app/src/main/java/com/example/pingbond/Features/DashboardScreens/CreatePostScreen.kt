@@ -52,6 +52,7 @@ class CreatePostScreen : ComponentActivity() {
 fun CreatePostScreenEnhanced(navController: NavController) {
     var postContent by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
 
     // Firebase references
     val db = FirebaseFirestore.getInstance()
@@ -66,137 +67,150 @@ fun CreatePostScreenEnhanced(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
+                brush = Brush.verticalGradient(
                     colors = listOf(Color(0xFF3D5AFE), Color(0xFF1E88E5))
-                )
+                ),
+                shape = RoundedCornerShape(0.dp)
             )
             .padding(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Volver",
-                        tint = Color.White
-                    )
-                }
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Nueva Publicación",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Content Card
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.SpaceBetween
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Text Field for Post
-                    TextField(
-                        value = postContent,
-                        onValueChange = { postContent = it },
-                        placeholder = { Text("Escribe tu publicación aquí...") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        colors = TextFieldDefaults.textFieldColors(
-                            containerColor = Color(0xFFF0F0F0),
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "Nueva Publicación",
+                                fontSize = 26.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = { navController.popBackStack() }) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Volver",
+                                    tint = Color.White
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            titleContentColor = Color.White
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    // Image Preview or Add Button
-                    if (selectedImageUri != null) {
-                        Image(
-                            painter = rememberAsyncImagePainter(selectedImageUri),
-                            contentDescription = "Selected Image",
+                    // Content Card
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        elevation = CardDefaults.cardElevation(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)
+                    ) {
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(150.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        OutlinedButton(
-                            onClick = { imagePickerLauncher.launch("image/*") },
-                            modifier = Modifier.fillMaxWidth()
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.SpaceBetween
                         ) {
+                            // Text Field for Post
+                            TextField(
+                                value = postContent,
+                                onValueChange = { postContent = it },
+                                placeholder = { Text("Escribe tu publicación aquí...") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                colors = TextFieldDefaults.textFieldColors(
+                                    containerColor = Color(0xFFF0F0F0),
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                )
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Image Preview or Add Button
+                            if (selectedImageUri != null) {
+                                Image(
+                                    painter = rememberAsyncImagePainter(selectedImageUri),
+                                    contentDescription = "Selected Image",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(150.dp)
+                                        .clip(RoundedCornerShape(12.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                OutlinedButton(
+                                    onClick = { imagePickerLauncher.launch("image/*") },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Image,
+                                        contentDescription = "Add Image",
+                                        tint = Color.Gray
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Agregar Imagen")
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Publish Button
+                    Button(
+                        onClick = {
+                            if (postContent.isNotBlank() && selectedImageUri != null) {
+                                isLoading = true
+                                uploadPost(postContent, selectedImageUri!!, db, storage) {
+                                    isLoading = false
+                                }
+                            } else {
+                                println("Completa todos los campos antes de publicar.")
+                            }
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 32.dp),
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White)
+                        } else {
                             Icon(
-                                imageVector = Icons.Default.Image,
-                                contentDescription = "Add Image",
-                                tint = Color.Gray
+                                imageVector = Icons.Default.Check,
+                                contentDescription = "Publish",
+                                tint = Color.White
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Agregar Imagen")
+                            Text(
+                                text = "Publicar",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
                         }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Publish Button
-            Button(
-                onClick = {
-                    if (postContent.isNotBlank() && selectedImageUri != null) {
-                        uploadPost(postContent, selectedImageUri!!, db, storage)
-                    } else {
-                        println("Completa todos los campos antes de publicar.")
-                    }
-                },
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Publish",
-                    tint = Color.White
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Publicar",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            }
-        }
-    }
 }
 
 fun uploadPost(
     postContent: String,
     imageUri: Uri,
     db: FirebaseFirestore,
-    storage: StorageReference
+    storage: StorageReference,
+    onComplete: () -> Unit
 ) {
     val postId = UUID.randomUUID().toString()
     val imageRef = storage.child("posts/$postId.jpg")
@@ -212,14 +226,17 @@ fun uploadPost(
                 db.collection("posts").document(postId).set(post)
                     .addOnSuccessListener {
                         println("Publicación creada exitosamente.")
+                        onComplete()
                     }
                     .addOnFailureListener {
                         println("Error al guardar la publicación: ${it.message}")
+                        onComplete()
                     }
             }
         }
         .addOnFailureListener {
             println("Error al subir la imagen: ${it.message}")
+            onComplete()
         }
 }
 
