@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.pingbond.R
 import com.example.pingbond.ui.theme.PINGBONDTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -81,28 +82,41 @@ fun ProfileScreenContentWithAnimation(navController: NavController) {
     var username by remember { mutableStateOf("Cargando...") }
     var email by remember { mutableStateOf("Cargando...") }
     var profilePicUrl by remember { mutableStateOf("") }
-    var posts by remember { mutableStateOf(listOf("Publicación 1", "Publicación 2", "Publicación 3")) }
+    var posts by remember { mutableStateOf(emptyList<String>()) }
 
-    // Cargar datos del usuario desde Firestore
-    LaunchedEffect(Unit) {
+    LaunchedEffect(userId) {
         userId?.let { id ->
-            db.collection("users").document(id).get()
-                .addOnSuccessListener { document ->
-                    username = document.getString("username") ?: "Sin Nombre"
-                    email = document.getString("email") ?: "Sin Correo"
-                    profilePicUrl = document.getString("profilePic") ?: ""
+            db.collection("users").document(id)
+                .addSnapshotListener { document, error ->
+                    if (error != null) {
+                        username = "Error al cargar"
+                        email = "Intenta más tarde"
+                        profilePicUrl = ""
+                        println("🔥 Firestore Error: ${error.message}")
+                        return@addSnapshotListener
+                    }
+
+                    if (document != null && document.exists()) {
+                        username = document.getString("username") ?: "Sin Nombre"
+                        email = document.getString("email") ?: "Sin Correo"
+                        profilePicUrl = document.getString("profilePic") ?: ""
+
+                        println("✅ Datos cargados correctamente: $username, $email, $profilePicUrl")
+                    } else {
+                        println("⚠️ Documento del usuario no encontrado en Firestore.")
+                        username = "No encontrado"
+                        email = "No encontrado"
+                        profilePicUrl = ""
+                    }
                 }
-        }
+        } ?: println("⚠️ Error: No se encontró el UID del usuario autenticado.")
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
+
+    Box(modifier = Modifier.fillMaxSize()) {
         AnimatedBackground()
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             ProfileHeader(username, email, profilePicUrl, navController)
@@ -114,9 +128,7 @@ fun ProfileScreenContentWithAnimation(navController: NavController) {
 @Composable
 fun ProfileHeader(username: String, email: String, profilePicUrl: String, navController: NavController) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier = Modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(
@@ -125,73 +137,45 @@ fun ProfileHeader(username: String, email: String, profilePicUrl: String, navCon
             modifier = Modifier.fillMaxWidth()
         ) {
             IconButton(onClick = { navController.popBackStack() }) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Volver",
-                    tint = Color.White
-                )
+                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Volver", tint = Color.White)
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Text(
-                text = username,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            Text(text = username, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
         }
 
         Box(
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-                .background(Color.Gray),
+            modifier = Modifier.size(100.dp).clip(CircleShape).background(Color.Gray),
             contentAlignment = Alignment.Center
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_profile_placeholder_foreground),
-                contentDescription = "Imagen de Perfil",
-                modifier = Modifier.fillMaxSize()
-            )
+            if (profilePicUrl.isNotEmpty()) {
+                Image(
+                    painter = rememberAsyncImagePainter(profilePicUrl),
+                    contentDescription = "Imagen de Perfil",
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_profile_placeholder_foreground),
+                    contentDescription = "Imagen de Perfil",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = username,
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White
-        )
-        Text(
-            text = email,
-            fontSize = 14.sp,
-            color = Color.White.copy(alpha = 0.8f)
-        )
+        Text(text = username, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(text = email, fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f))
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Row(
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
             IconButton(onClick = { /* Acción de editar */ }) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar",
-                        tint = Color.White
-                    )
-                }
+                Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar", tint = Color.White)
             }
 
             IconButton(onClick = { /* Acción de configuración */ }) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Settings,
-                        contentDescription = "Configuración",
-                        tint = Color.White
-                    )
-                }
+                Icon(imageVector = Icons.Default.Settings, contentDescription = "Configuración", tint = Color.White)
             }
         }
     }
@@ -221,21 +205,11 @@ fun PostsSection(posts: List<String>) {
 @Composable
 fun PostCard(postContent: String) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp)),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = postContent,
-                fontSize = 16.sp,
-                color = Color.Black,
-                fontWeight = FontWeight.Medium
-            )
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.Center) {
+            Text(text = postContent, fontSize = 16.sp, color = Color.Black, fontWeight = FontWeight.Medium)
         }
     }
 }

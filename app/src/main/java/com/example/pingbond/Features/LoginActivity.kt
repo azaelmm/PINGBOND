@@ -9,11 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AssignmentInd
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Man
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +30,7 @@ import com.example.pingbond.ui.theme.OnPrimary
 import com.example.pingbond.ui.theme.PINGBONDTheme
 import com.example.pingbond.ui.theme.PrimaryVariant
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.auth.ktx.auth
 
@@ -66,7 +63,7 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavHostController) {
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
-        ) // Aquí puedes añadir otros composables sobre la imagen de fondo
+        )
 
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -86,24 +83,28 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavHostController) {
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = {Text("Iniciar Sesión",
-                        color =  Color.White,
-                        fontSize = 16.sp
-                    )}
-
+                    text = {
+                        Text(
+                            "Iniciar Sesión",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+                    }
                 )
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = {Text("Registrarse",
-                        color = Color.White,
-                        fontSize = 16.sp
-                    )}
+                    text = {
+                        Text(
+                            "Registrarse",
+                            color = Color.White,
+                            fontSize = 16.sp
+                        )
+                    }
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
 
             if (selectedTab == 0) {
                 LoginForm(onLogin = { email, password ->
@@ -123,26 +124,10 @@ fun LoginScreen(auth: FirebaseAuth, navController: NavHostController) {
                         }
                 })
             } else {
-                RegisterForm(onRegister = { email, password ->
-                    auth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                Log.i("RegisterScreen", "Registro exitoso")
-                                navController.navigate("dashboard") {
-                                    popUpTo("login") { inclusive = true }
-                                }
-                            } else {
-                                Log.i(
-                                    "RegisterScreen",
-                                    "Error al registrarse: ${task.exception?.message}"
-                                )
-                            }
-                        }
-                })
+                RegisterForm(auth = auth, navController = navController)
             }
         }
     }
-
 }
 
 @Composable
@@ -205,11 +190,13 @@ fun LoginForm(onLogin: (String, String) -> Unit) {
 }
 
 @Composable
-fun RegisterForm(onRegister: (String, String) -> Unit) {
+fun RegisterForm(auth: FirebaseAuth, navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
 
+    val db = FirebaseFirestore.getInstance() // Instancia de Firestore
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
 
@@ -242,22 +229,59 @@ fun RegisterForm(onRegister: (String, String) -> Unit) {
 
         Button(
             onClick = {
-                if (email.isNotBlank() && password.isNotBlank()) {
-                    onRegister(email, password)
+                if (username.isBlank() || email.isBlank() || password.isBlank()) {
+                    errorMessage = "Por favor, completa todos los campos."
+                } else {
+                    errorMessage = ""
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val userId = auth.currentUser?.uid
+                                val user = hashMapOf(
+                                    "username" to username,
+                                    "email" to email,
+                                    "profilePic" to "" // Puedes poner una URL predeterminada aquí
+                                )
+
+                                // Guardar en Firestore
+                                userId?.let {
+                                    db.collection("users").document(it).set(user)
+                                        .addOnSuccessListener {
+                                            Log.i("RegisterScreen", "Usuario guardado en Firestore")
+                                            navController.navigate("dashboard") {
+                                                popUpTo("login") { inclusive = true }
+                                            }
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.i("RegisterScreen", "Error al guardar usuario: ${e.message}")
+                                        }
+                                }
+                            } else {
+                                errorMessage = "Error al registrarse: ${task.exception?.message}"
+                            }
+                        }
                 }
             },
             colors = ButtonDefaults.buttonColors(
                 containerColor = PrimaryVariant,
-                contentColor = OnPrimary),
-
+                contentColor = OnPrimary
+            ),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(50)
         ) {
             Text(text = "Registrarse", fontSize = 16.sp)
         }
+
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -13,8 +13,10 @@
         android:theme="@style/Theme.PINGBOND"
         tools:targetApi="31">
 
+
         <activity android:name="com.example.pingbond.Features.NavigationScreens"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -217,7 +217,7 @@ fun BottomNavigationBar(navController: NavController) {
                     fontSize = 12.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                     color = if (isSelected) Color(0xFF6200EE) else Color(0xFF757575)
-                )
+               )
             }
         }
     }
