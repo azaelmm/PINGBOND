@@ -12,7 +12,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,6 +33,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.pingbond.Features.DashboardScreens.CreatePostScreenEnhanced
 import com.example.pingbond.Features.DashboardScreens.ProfileScreenContentWithAnimation
 import com.example.pingbond.ui.theme.PINGBONDTheme
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,20 +69,42 @@ class DashboardActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun DashboardScreen(navController: NavController) {
+    val auth = FirebaseAuth.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    val userId = auth.currentUser?.uid
+
+    var username by remember { mutableStateOf("Cargando...") }
+
+    // Cargar datos del usuario desde Firestore
+    LaunchedEffect(userId) {
+        userId?.let { id ->
+            db.collection("users").document(id)
+                .addSnapshotListener { document, error ->
+                    if (error != null) {
+                        username = "Error al cargar"
+                        return@addSnapshotListener
+                    }
+
+                    if (document != null && document.exists()) {
+                        username = document.getString("username") ?: "Sin Nombre"
+                    }
+                }
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFFAFAFA)) // Fondo más suave
+            .background(Color(0xFFFAFAFA))
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            HeaderSection()
-
-            // Contenido principal
+            HeaderSection(username)  // Pasamos el nombre obtenido
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -98,7 +126,7 @@ fun DashboardScreen(navController: NavController) {
 }
 
 @Composable
-fun HeaderSection() {
+fun HeaderSection(username: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -107,8 +135,8 @@ fun HeaderSection() {
             .shadow(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(12.dp),
-                ambientColor = Color(0xFF1E88E5), // Sombra azulada
-                spotColor = Color(0xFF1E88E5) // Sombra azulada
+                ambientColor = Color(0xFF1E88E5),
+                spotColor = Color(0xFF1E88E5)
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
@@ -118,35 +146,34 @@ fun HeaderSection() {
             modifier = Modifier
                 .size(60.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFE0E0E0)) // Color de fondo del avatar
+                .background(Color(0xFFE0E0E0))
         )
 
-        Spacer(modifier = Modifier.width(16.dp)) // Separación entre avatar y texto
+        Spacer(modifier = Modifier.width(16.dp))
 
         // Nombre del usuario y descripción
         Column {
             Text(
-                text = "username",
+                text = username, // Se muestra el nombre cargado de Firestore
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
-                color = Color(0xFF333333) // Texto oscuro
+                color = Color(0xFF333333)
             )
             Text(
                 text = "324 posts | 4348 followers",
                 fontSize = 14.sp,
-                color = Color(0xFF757575) // Texto gris
+                color = Color(0xFF757575)
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f)) // Empuja el ícono de ajustes al extremo derecho
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Icono de ajustes
         IconButton(
             onClick = { /* Acción de ajustes */ },
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFF5F5F5)) // Fondo circular para el ícono
+                .background(Color(0xFFF5F5F5))
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
@@ -157,6 +184,7 @@ fun HeaderSection() {
         }
     }
 }
+
 
 @Composable
 fun BottomNavigationBar(navController: NavController) {

@@ -55,7 +55,7 @@ android {
 
 dependencies {
     implementation(libs.lottie.compose)
-    implementation (libs.firebase.ui.auth)
+    implementation(libs.firebase.ui.auth)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -84,5 +84,10 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
     implementation("com.google.android.gms:play-services-maps:19.1.0")
-}
 
+    implementation("androidx.activity:activity-ktx:1.2.0-alpha06")
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.vanniktech:android-image-cropper:4.5.0")
+
+}
