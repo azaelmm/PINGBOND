@@ -77,6 +77,8 @@ fun ProfileScreenContentWithAnimation(navController: NavController) {
     var email by remember { mutableStateOf("Cargando...") }
     var profilePicUrl by remember { mutableStateOf("") }
     var showEditDialog by remember { mutableStateOf(false) }
+    var userPosts by remember { mutableStateOf<List<String>>(emptyList()) }
+
 
     // 🔹 Cargar datos del usuario desde Firestore
     LaunchedEffect(userId) {
@@ -90,8 +92,30 @@ fun ProfileScreenContentWithAnimation(navController: NavController) {
                         profilePicUrl = document.getString("profilePic") ?: ""
                     }
                 }
+
+            // 🔹 Cargar posts del usuario, ordenados por timestamp DESC
+            db.collection("posts")
+                .whereEqualTo("userId", id)
+                .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+                .addSnapshotListener { querySnapshot, error ->
+                    if (error != null) {
+                        println("❌ Error al cargar posts: ${error.message}")
+                        return@addSnapshotListener
+                    }
+
+                    val postsList = mutableListOf<String>()
+                    querySnapshot?.documents?.forEach { doc ->
+                        val content = doc.getString("content") ?: ""
+                        postsList.add(content)
+                    }
+
+                    userPosts = postsList
+                    println("✅ Posts cargados: ${userPosts.size}")
+                }
         }
     }
+
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         AnimatedBackground()
@@ -115,6 +139,7 @@ fun ProfileScreenContentWithAnimation(navController: NavController) {
                     }
                 )
             }
+            PostsSection(posts = userPosts)
         }
     }
 }
