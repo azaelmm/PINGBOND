@@ -1,5 +1,6 @@
 package com.example.pingbond.Features.DashboardScreens
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -31,9 +32,22 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.pingbond.ui.theme.PINGBONDTheme
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.util.*
+import androidx.compose.ui.platform.LocalContext
+import com.example.pingbond.network.ImgurApiService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 
 class CreatePostScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +71,8 @@ fun CreatePostScreenEnhanced(navController: NavController) {
     // Firebase references
     val db = FirebaseFirestore.getInstance()
     val storage = FirebaseStorage.getInstance().reference
+    val context = LocalContext.current
+
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
@@ -169,13 +185,35 @@ fun CreatePostScreenEnhanced(navController: NavController) {
                     // Publish Button
                     Button(
                         onClick = {
-                            if (postContent.isNotBlank() && selectedImageUri != null) {
+                            val auth = FirebaseAuth.getInstance()
+                            val userId = auth.currentUser?.uid
+                            val currentUserId = userId ?: ""
+
+                            if (userId != null && selectedImageUri != null && postContent.isNotBlank()) {
                                 isLoading = true
-                                uploadPost(postContent, selectedImageUri!!, db, storage) {
-                                    isLoading = false
-                                }
+                                db.collection("users").document(userId).get()
+                                    .addOnSuccessListener { document ->
+                                        val username = document.getString("username") ?: "Anónimo"
+
+                                        uploadPostUsingImgur(
+                                            postContent = postContent,
+                                            imageUri = selectedImageUri!!,
+                                            db = db,
+                                            currentUserId = currentUserId,
+                                            username = username,
+                                            context = context,
+                                            onComplete = {
+                                                isLoading = false
+                                                println("✅ Publicación completa.")
+                                            }
+                                        )
+                                    }
+                                    .addOnFailureListener { e ->
+                                        println("❌ Error al obtener usuario: ${e.message}")
+                                        isLoading = false
+                                    }
                             } else {
-                                println("Completa todos los campos antes de publicar.")
+                                println("❌ Completa todos los campos antes de publicar.")
                             }
                         },
                         shape = RoundedCornerShape(16.dp),
@@ -205,40 +243,82 @@ fun CreatePostScreenEnhanced(navController: NavController) {
             }
 }
 
-fun uploadPost(
+fun uriToFileImgur(context: Context, uri: Uri): File? {
+    return try {
+        val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
+        val file = File(context.cacheDir, "temp_${UUID.randomUUID()}.jpg")
+        val outputStream = FileOutputStream(file)
+        inputStream?.copyTo(outputStream)
+        inputStream?.close()
+        outputStream.close()
+        file
+    } catch (e: Exception) {
+        println("❌ Error al convertir Uri a File: ${e.message}")
+        null
+    }
+}
+
+
+
+fun uploadPostUsingImgur(
+    context: Context,
     postContent: String,
     imageUri: Uri,
     db: FirebaseFirestore,
-    storage: StorageReference,
+    currentUserId: String,
+    username: String,
     onComplete: () -> Unit
 ) {
     val postId = UUID.randomUUID().toString()
-    val imageRef = storage.child("posts/$postId.jpg")
 
-    imageRef.putFile(imageUri)
-        .addOnSuccessListener {
-            imageRef.downloadUrl.addOnSuccessListener { uri ->
+    CoroutineScope(Dispatchers.IO).launch {
+        try {
+            // Convertir Uri a File
+            val file = uriToFileImgur(context, imageUri)
+            if (file == null) {
+                println("\uD83D\uDD34 Error al convertir URI a archivo")
+                onComplete()
+                return@launch
+            }
+
+            val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+            val body = MultipartBody.Part.createFormData("image", file.name, requestFile)
+
+            val imgurApi = ImgurApiService.create()
+            val response = imgurApi.uploadImage("Client-ID ba770e159d9cd8e", body, null)
+
+            if (response.success && response.data.link.isNotEmpty()) {
+                val imgurUrl = response.data.link
+                println("✅ Imagen subida a Imgur: $imgurUrl")
+
                 val post = hashMapOf(
                     "content" to postContent,
-                    "imageUrl" to uri.toString(),
-                    "timestamp" to System.currentTimeMillis()
+                    "imageUrl" to imgurUrl,
+                    "timestamp" to FieldValue.serverTimestamp(),
+                    "userId" to currentUserId,
+                    "username" to username
                 )
+
                 db.collection("posts").document(postId).set(post)
                     .addOnSuccessListener {
-                        println("Publicación creada exitosamente.")
+                        println("✅ Post guardado con ID: $postId")
                         onComplete()
                     }
                     .addOnFailureListener {
-                        println("Error al guardar la publicación: ${it.message}")
+                        println("❌ Error guardando el post: ${it.message}")
                         onComplete()
                     }
+            } else {
+                println("❌ Fallo en respuesta Imgur: ${response.status}")
+                onComplete()
             }
-        }
-        .addOnFailureListener {
-            println("Error al subir la imagen: ${it.message}")
+        } catch (e: Exception) {
+            println("❌ Error subiendo imagen a Imgur: ${e.message}")
             onComplete()
         }
+    }
 }
+
 
 @Preview(showBackground = true)
 @Composable

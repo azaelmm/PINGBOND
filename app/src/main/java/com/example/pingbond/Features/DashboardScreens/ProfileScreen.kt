@@ -77,7 +77,7 @@ fun ProfileScreenContentWithAnimation(navController: NavController) {
     var email by remember { mutableStateOf("Cargando...") }
     var profilePicUrl by remember { mutableStateOf("") }
     var showEditDialog by remember { mutableStateOf(false) }
-    var userPosts by remember { mutableStateOf<List<String>>(emptyList()) }
+    var userPosts by remember { mutableStateOf<List<UserPost>>(emptyList()) }
 
 
     // 🔹 Cargar datos del usuario desde Firestore
@@ -103,10 +103,11 @@ fun ProfileScreenContentWithAnimation(navController: NavController) {
                         return@addSnapshotListener
                     }
 
-                    val postsList = mutableListOf<String>()
+                    val postsList = mutableListOf<UserPost>()
                     querySnapshot?.documents?.forEach { doc ->
                         val content = doc.getString("content") ?: ""
-                        postsList.add(content)
+                        val imageUrl = doc.getString("imageUrl") ?: ""
+                        postsList.add(UserPost(content, imageUrl))
                     }
 
                     userPosts = postsList
@@ -164,7 +165,7 @@ fun uriToFile(context: Context, uri: Uri): File? {
 
 
 @Composable
-fun PostsSection(posts: List<String>) {
+fun PostsSection(posts: List<UserPost>) {
     Column {
         Text(
             text = "Publicaciones recientes",
@@ -178,11 +179,12 @@ fun PostsSection(posts: List<String>) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(posts.size) { index ->
-                PostCard(postContent = posts[index])
+                PostCard(post = posts[index])
             }
         }
     }
 }
+
 
 @Composable
 fun AnimatedBackground() {
@@ -211,16 +213,36 @@ fun AnimatedBackground() {
 
 
 @Composable
-fun PostCard(postContent: String) {
+fun PostCard(post: UserPost) {
     Card(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.Center) {
-            Text(text = postContent, fontSize = 16.sp, color = Color.Black, fontWeight = FontWeight.Medium)
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (post.imageUrl.isNotEmpty()) {
+                Image(
+                    painter = rememberAsyncImagePainter(post.imageUrl),
+                    contentDescription = "Imagen del post",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+            Text(
+                text = post.content,
+                fontSize = 16.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
+
 
 // 🔹 Subir imagen a Imgur y actualizar Firestore
 fun updateProfile(
@@ -377,6 +399,12 @@ fun ProfileHeader(username: String, email: String, profilePicUrl: String, navCon
         }
     }
 }
+
+data class UserPost(
+    val content: String,
+    val imageUrl: String
+)
+
 
 
 
