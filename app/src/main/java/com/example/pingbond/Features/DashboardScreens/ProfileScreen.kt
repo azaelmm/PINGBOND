@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.pingbond.R
 import com.example.pingbond.network.ImgurApiService
@@ -373,10 +374,11 @@ fun ProfileHeader(username: String, email: String, profilePicUrl: String, navCon
             contentAlignment = Alignment.Center
         ) {
             if (profilePicUrl.isNotEmpty()) {
-                Image(
-                    painter = rememberAsyncImagePainter(profilePicUrl),
+                AsyncImage(
+                    model = profilePicUrl,
                     contentDescription = "Imagen de Perfil",
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
                 )
             } else {
                 Image(

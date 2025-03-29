@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,8 +32,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
+import com.example.pingbond.Features.Components.PostItem
 import com.example.pingbond.Features.DashboardScreens.CreatePostScreenEnhanced
 import com.example.pingbond.Features.DashboardScreens.ProfileScreenContentWithAnimation
+import com.example.pingbond.Features.ViewModels.PostViewModel
+import com.example.pingbond.R
 import com.example.pingbond.ui.theme.PINGBONDTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -77,6 +83,9 @@ fun DashboardScreen(navController: NavController) {
     val userId = auth.currentUser?.uid
 
     var username by remember { mutableStateOf("Cargando...") }
+    var profileImageUrl by remember { mutableStateOf<String?>(null) } // Nuevo estado para la imagen
+    val postViewModel = remember { PostViewModel() }
+    val posts by postViewModel.posts.collectAsState()
 
     // Cargar datos del usuario desde Firestore
     LaunchedEffect(userId) {
@@ -90,6 +99,8 @@ fun DashboardScreen(navController: NavController) {
 
                     if (document != null && document.exists()) {
                         username = document.getString("username") ?: "Sin Nombre"
+                        profileImageUrl = document.getString("profilePic") // Obtener la URL
+                        println("✅ Imagen de perfil cargada: $profileImageUrl")
                     }
                 }
         }
@@ -104,20 +115,19 @@ fun DashboardScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            HeaderSection(username)  // Pasamos el nombre obtenido
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
+            HeaderSection(username, profileImageUrl)  // Pasamos también la URL de la imagen
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(16.dp)
             ) {
-                Text(
-                    "Explora contenido aquí",
-                    color = Color(0xFF757575),
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                items(posts.size) { index ->
+                    val post = posts[index]
+                    PostItem(post)
+
+                    if (index == posts.lastIndex) {
+                        postViewModel.fetchPosts() // Cargar más posts cuando llegue al final
+                    }
+                }
             }
 
             BottomNavigationBar(navController)
@@ -126,7 +136,7 @@ fun DashboardScreen(navController: NavController) {
 }
 
 @Composable
-fun HeaderSection(username: String) {
+fun HeaderSection(username: String, profileImageUrl: String?) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -141,8 +151,10 @@ fun HeaderSection(username: String) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        // Avatar del usuario
-        Box(
+        // Avatar del usuario con Coil
+        AsyncImage(
+            model = profileImageUrl,
+            contentDescription = "Foto de perfil",
             modifier = Modifier
                 .size(60.dp)
                 .clip(CircleShape)
@@ -154,7 +166,7 @@ fun HeaderSection(username: String) {
         // Nombre del usuario y descripción
         Column {
             Text(
-                text = username, // Se muestra el nombre cargado de Firestore
+                text = username,
                 fontWeight = FontWeight.Bold,
                 fontSize = 20.sp,
                 color = Color(0xFF333333)
