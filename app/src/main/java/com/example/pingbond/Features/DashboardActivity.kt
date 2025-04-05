@@ -122,13 +122,16 @@ fun DashboardScreen(navController: NavController) {
             ) {
                 items(posts.size) { index ->
                     val post = posts[index]
-                    PostItem(post)
+                    PostItem(post) { postId ->
+                        userId?.let { postViewModel.toggleLike(postId, it) }
+                    }
 
                     if (index == posts.lastIndex) {
                         postViewModel.fetchPosts() // Cargar más posts cuando llegue al final
                     }
                 }
             }
+
 
             BottomNavigationBar(navController)
         }
