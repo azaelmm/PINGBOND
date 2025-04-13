@@ -63,42 +63,53 @@ class PostViewModel : ViewModel() {
 
             for (doc in docs) {
                 val postId = doc.id
-                val basePost = Post(
-                    id = postId,
-                    userId = doc.getString("userId") ?: "",
-                    username = doc.getString("username") ?: "Desconocido",
-                    profilePic = doc.getString("profilePic"),
-                    imageUrl = doc.getString("imageUrl") ?: "",
-                    content = doc.getString("content") ?: "",
-                    timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L,
-                    likesCount = (doc.getLong("likesCount") ?: 0).toInt()
-                )
+                val userId = doc.getString("userId") ?: continue
 
-                db.collection("posts").document(postId)
-                    .collection("likes").document(currentUser)
-                    .get()
-                    .addOnSuccessListener { likeDoc ->
-                        val liked = likeDoc.exists()
-                        newPosts.add(basePost.copy(isLikedByCurrentUser = liked))
-                        Log.d("FETCH_POSTS", "Post ${postId} liked: $liked")
+                db.collection("users").document(userId).get().addOnSuccessListener { userDoc ->
+                    val profilePicUrl = userDoc.getString("profilePic")
 
-                        if (newPosts.size == docs.size) {
-                            _posts.value = _posts.value + newPosts
-                            lastVisiblePost = docs.lastOrNull()
+                    val basePost = Post(
+                        id = postId,
+                        userId = userId,
+                        username = doc.getString("username") ?: "Desconocido",
+                        profilePic = profilePicUrl, // ✅ desde users
+                        imageUrl = doc.getString("imageUrl") ?: "",
+                        content = doc.getString("content") ?: "",
+                        timestamp = doc.getTimestamp("timestamp")?.toDate()?.time ?: 0L,
+                        likesCount = (doc.getLong("likesCount") ?: 0).toInt()
+                    )
+
+                    db.collection("posts").document(postId)
+                        .collection("likes").document(currentUser)
+                        .get()
+                        .addOnSuccessListener { likeDoc ->
+                            val liked = likeDoc.exists()
+                            newPosts.add(basePost.copy(isLikedByCurrentUser = liked))
+                            Log.d("FETCH_POSTS", "Post $postId liked: $liked")
+
+                            if (newPosts.size == docs.size) {
+                                _posts.value = _posts.value + newPosts
+                                lastVisiblePost = docs.lastOrNull()
+                                isLoading = false
+                                Log.d("FETCH_POSTS", "Posts cargados: ${_posts.value.size}")
+                            }
+                        }.addOnFailureListener { e ->
+                            Log.e("FETCH_POSTS", "Error al obtener like de $postId", e)
                             isLoading = false
-                            Log.d("FETCH_POSTS", "Posts cargados: ${_posts.value.size}")
                         }
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("FETCH_POSTS", "Error al obtener like de $postId", e)
-                        isLoading = false
-                    }
+
+                }.addOnFailureListener { e ->
+                    Log.e("FETCH_POSTS", "Error al obtener datos del usuario $userId", e)
+                    isLoading = false
+                }
             }
+
         }.addOnFailureListener { e ->
             Log.e("FETCH_POSTS", "Error al obtener posts", e)
             isLoading = false
         }
     }
+
 
 
 
