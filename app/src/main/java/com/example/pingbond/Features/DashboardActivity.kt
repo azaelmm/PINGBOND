@@ -1,5 +1,6 @@
 package com.example.pingbond.Features
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,13 +36,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.example.pingbond.Features.Components.PostItem
+import com.example.pingbond.Features.DashboardScreens.BuscarActivity
+import com.example.pingbond.Features.DashboardScreens.BuscarScreen
 import com.example.pingbond.Features.DashboardScreens.CreatePostScreenEnhanced
+import com.example.pingbond.Features.DashboardScreens.PerfilDeUsuarioScreen
 import com.example.pingbond.Features.DashboardScreens.ProfileScreenContentWithAnimation
 import com.example.pingbond.Features.ViewModels.PostViewModel
 import com.example.pingbond.R
 import com.example.pingbond.ui.theme.PINGBONDTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,7 +64,7 @@ class DashboardActivity : ComponentActivity() {
                         DashboardScreen(navController = navController)
                     }
                     composable("buscar") {
-                        PlaceholderScreen("Buscar")
+                        BuscarScreen(navController)
                     }
                     composable("publicar") {
                         CreatePostScreenEnhanced(navController)
@@ -68,6 +74,10 @@ class DashboardActivity : ComponentActivity() {
                     }
                     composable("perfil") {
                         ProfileScreenContentWithAnimation(navController)
+                    }
+                    composable("perfilUsuario/{uid}") { backStackEntry ->
+                        val uid = backStackEntry.arguments?.getString("uid") ?: ""
+                        PerfilDeUsuarioScreen(userId = uid)
                     }
                 }
             }
@@ -205,6 +215,7 @@ fun HeaderSection(username: String, profileImageUrl: String?) {
 fun BottomNavigationBar(navController: NavController) {
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
+    val context = LocalContext.current
 
     Row(
         modifier = Modifier
@@ -236,7 +247,10 @@ fun BottomNavigationBar(navController: NavController) {
             ) {
                 IconButton(
                     onClick = {
-                        if (currentRoute != route) {
+                        if (route == "buscar") {
+                            // ✅ Usamos el contexto para lanzar BuscarActivity
+                            context.startActivity(Intent(context, BuscarActivity::class.java))
+                        } else if (currentRoute != route) {
                             navController.navigate(route) {
                                 popUpTo(navController.graph.startDestinationId) {
                                     saveState = true
@@ -245,6 +259,7 @@ fun BottomNavigationBar(navController: NavController) {
                                 restoreState = true
                             }
                         }
+
                     },
                     modifier = Modifier.size(48.dp)
                 ) {
