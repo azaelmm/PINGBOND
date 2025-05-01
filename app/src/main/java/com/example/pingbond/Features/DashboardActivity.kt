@@ -3,6 +3,7 @@ package com.example.pingbond.Features
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -93,11 +94,12 @@ fun DashboardScreen(navController: NavController) {
     val userId = auth.currentUser?.uid
 
     var username by remember { mutableStateOf("Cargando...") }
-    var profileImageUrl by remember { mutableStateOf<String?>(null) } // Nuevo estado para la imagen
+    var profileImageUrl by remember { mutableStateOf<String?>(null) }
+    var postCount by remember { mutableStateOf(0) } // ✅ contador de publicaciones
     val postViewModel = remember { PostViewModel() }
     val posts by postViewModel.posts.collectAsState()
 
-    // Cargar datos del usuario desde Firestore
+    // Cargar datos del usuario
     LaunchedEffect(userId) {
         userId?.let { id ->
             db.collection("users").document(id)
@@ -109,9 +111,21 @@ fun DashboardScreen(navController: NavController) {
 
                     if (document != null && document.exists()) {
                         username = document.getString("username") ?: "Sin Nombre"
-                        profileImageUrl = document.getString("profilePic") // Obtener la URL
+                        profileImageUrl = document.getString("profilePic")
                         println("✅ Imagen de perfil cargada: $profileImageUrl")
                     }
+                }
+
+            // Cargar número de publicaciones del usuario
+            db.collection("posts")
+                .whereEqualTo("userId", id)
+                .addSnapshotListener { querySnapshot, error ->
+                    if (error != null) {
+                        println("❌ Error contando posts: ${error.message}")
+                        return@addSnapshotListener
+                    }
+                    postCount = querySnapshot?.size() ?: 0
+                    println("✅ Total posts: $postCount")
                 }
         }
     }
@@ -125,7 +139,7 @@ fun DashboardScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            HeaderSection(username, profileImageUrl)  // Pasamos también la URL de la imagen
+            HeaderSection(username, profileImageUrl, postCount)  // ✅ ahora pasamos también postCount
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(16.dp)
@@ -137,11 +151,10 @@ fun DashboardScreen(navController: NavController) {
                     }
 
                     if (index == posts.lastIndex) {
-                        postViewModel.fetchPosts() // Cargar más posts cuando llegue al final
+                        postViewModel.fetchPosts()
                     }
                 }
             }
-
 
             BottomNavigationBar(navController)
         }
@@ -149,7 +162,11 @@ fun DashboardScreen(navController: NavController) {
 }
 
 @Composable
-fun HeaderSection(username: String, profileImageUrl: String?) {
+fun HeaderSection(username: String, profileImageUrl: String?, postCount: Int) {
+
+    val context = LocalContext.current
+    var expanded by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -164,7 +181,7 @@ fun HeaderSection(username: String, profileImageUrl: String?) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-        // Avatar del usuario con Coil
+        // Foto de perfil
         AsyncImage(
             model = profileImageUrl,
             contentDescription = "Foto de perfil",
@@ -176,7 +193,6 @@ fun HeaderSection(username: String, profileImageUrl: String?) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        // Nombre del usuario y descripción
         Column {
             Text(
                 text = username,
@@ -184,31 +200,78 @@ fun HeaderSection(username: String, profileImageUrl: String?) {
                 fontSize = 20.sp,
                 color = Color(0xFF333333)
             )
-            Text(
-                text = "324 posts | 4348 followers",
-                fontSize = 14.sp,
-                color = Color(0xFF757575)
-            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+
+                Text(
+                    text = "Nº de publicaciones: $postCount ",
+                    fontSize = 14.sp,
+                    color = Color(0xFF757575)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = Icons.Default.PhotoCamera, // 📸 Icono de "foto"
+                    contentDescription = "Icono publicaciones",
+                    tint = Color(0xFF757575),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        IconButton(
-            onClick = { /* Acción de ajustes */ },
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(Color(0xFFF5F5F5))
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "Ajustes",
-                tint = Color(0xFF4A4A4A),
-                modifier = Modifier.size(24.dp)
-            )
+        Box {
+            IconButton(
+                onClick = { expanded = true },
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFF5F5F5))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Ajustes",
+                    tint = Color(0xFF4A4A4A),
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Cerrar sesión") },
+                    onClick = {
+                        expanded = false
+                        FirebaseAuth.getInstance().signOut()
+                        val intent = Intent(context, LoginActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        context.startActivity(intent)
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Modo claro/oscuro") },
+                    onClick = {
+                        expanded = false
+                        // Lógica de cambio de tema futura
+                        Toast.makeText(context, "Tema: pendiente de implementar", Toast.LENGTH_SHORT).show()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Versión: 1.0.0") },
+                    onClick = {
+                        expanded = false
+                        Toast.makeText(context, "Versión 1.0.0", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
         }
     }
 }
+
 
 
 @Composable
