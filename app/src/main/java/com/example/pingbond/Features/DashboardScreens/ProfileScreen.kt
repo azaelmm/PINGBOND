@@ -336,12 +336,23 @@ fun EditProfileDialog(
             }
         },
         confirmButton = {
-            Button(onClick = { onSave(newUsername.text, newProfilePicUri) }) {
+            Button(onClick = { onSave(newUsername.text, newProfilePicUri) },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF355E3B), // Azul
+                    contentColor = Color.White
+                )
+            ) {
                 Text("Guardar")
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF8B0000), // Dark Red (Dark Red)
+                    contentColor = Color.White
+                )
+            ) {
                 Text("Cancelar")
             }
         }

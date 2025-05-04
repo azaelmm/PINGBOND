@@ -201,7 +201,7 @@ fun HeaderSection(username: String, profileImageUrl: String?, postCount: Int) {
                 color = Color(0xFF333333)
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+//            Spacer(modifier = Modifier.height(2.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
 
@@ -253,18 +253,10 @@ fun HeaderSection(username: String, profileImageUrl: String?, postCount: Int) {
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Modo claro/oscuro") },
+                    text = { Text("Versión: 1.0") },
                     onClick = {
                         expanded = false
-                        // Lógica de cambio de tema futura
-                        Toast.makeText(context, "Tema: pendiente de implementar", Toast.LENGTH_SHORT).show()
-                    }
-                )
-                DropdownMenuItem(
-                    text = { Text("Versión: 1.0.0") },
-                    onClick = {
-                        expanded = false
-                        Toast.makeText(context, "Versión 1.0.0", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Version: 1.0, Creator: Azael Morell ", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -306,7 +298,7 @@ fun BottomNavigationBar(navController: NavController) {
 
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(vertical = 8.dp)
+                modifier = Modifier.padding(vertical = 14.dp)
             ) {
                 IconButton(
                     onClick = {
