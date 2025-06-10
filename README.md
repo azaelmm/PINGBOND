@@ -2,8 +2,8 @@
 
 1. Clonar el repositorio
 
-Dirígete a la página del repositorio público en GitHub y copia la URL. Luego, desde tu terminal o consola de comandos, ejecuta:                                     
-'git clone https://github.com/azaelmm/PINGBOND.git'
+  - Dirígete a la página del repositorio público en GitHub y copia la URL. Luego, desde tu terminal o consola de comandos, ejecuta:                                     
+  'git clone https://github.com/azaelmm/PINGBOND.git'
 
 2. Abrir el proyecto en Android Studio
 
